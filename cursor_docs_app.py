@@ -2,36 +2,26 @@
 Cursor Commands vs Rules Explainer App
 
 A Streamlit application that educates developers on the differences between
-Cursor Commands and Rules, provides real examples, and includes an interactive
-generator for project-structure.md files.
+Cursor Commands and Rules, provides real examples, AI prompts for generation,
+and links to verified resources.
 
 Run with: streamlit run cursor_docs_app.py
 """
 
 import streamlit as st
-from pathlib import Path
 
 # Import our modules
 from cursor_docs_content import (
-    RULES_VS_COMMANDS,
     FRONTMATTER_FIELDS,
     get_comparison_table,
-    get_comparison_data,
-    get_rule_frontmatter_docs,
     load_example_files,
     parse_frontmatter,
     get_file_annotations,
-    get_project_structure_template,
-    generate_template_based_structure,
     get_quick_tips,
     get_prompt_templates,
     get_generic_commands,
     get_external_resources,
     get_community_rule_examples,
-)
-from llm import (
-    generate_project_structure_sync,
-    check_api_keys,
 )
 
 # ============================================================================
@@ -213,7 +203,7 @@ with st.sidebar:
     st.markdown("### 📖 About This App")
     st.markdown("""
     Learn the difference between **Cursor Rules** and **Cursor Commands**, 
-    explore real examples, and generate your own project structure files.
+    explore real examples, and get prompts to generate your own using Cursor AI.
     """)
     
     st.markdown("---")
@@ -238,21 +228,6 @@ with st.sidebar:
     st.markdown("### ⚡ Quick Tips")
     for tip in get_quick_tips("general"):
         st.markdown(f"• {tip}")
-    
-    st.markdown("---")
-    
-    # API Key status
-    st.markdown("### 🔑 API Status")
-    api_status = check_api_keys()
-    if api_status["openai"]:
-        st.success("✓ OpenAI API key found")
-    else:
-        st.warning("○ OpenAI API key not set")
-    
-    if api_status["anthropic"]:
-        st.success("✓ Anthropic API key found")
-    else:
-        st.warning("○ Anthropic API key not set")
 
 # ============================================================================
 # MAIN CONTENT
@@ -262,13 +237,12 @@ st.markdown("# Cursor Commands vs Rules")
 st.markdown("*Master Cursor's customization features to supercharge your AI-assisted coding*")
 
 # Create tabs
-tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources, tab_generator = st.tabs([
+tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources = st.tabs([
     "📊 Overview", 
     "📁 Live Examples",
     "✨ AI Prompts",
     "⚡ Commands",
-    "🔗 Resources",
-    "🛠️ Generator"
+    "🔗 Resources"
 ])
 
 # ============================================================================
@@ -767,148 +741,6 @@ with tab_resources:
     | `alwaysApply` | boolean | Always include this rule |
     """)
 
-
-# ============================================================================
-# TAB 6: STRUCTURE GENERATOR
-# ============================================================================
-
-with tab_generator:
-    st.markdown("## Project Structure Generator")
-    st.markdown("Generate a `project-structure.md` file for your own project.")
-    
-    # Check API availability
-    api_status = check_api_keys()
-    has_api = api_status["openai"] or api_status["anthropic"]
-    
-    if has_api:
-        st.success("🤖 AI-powered generation available!")
-        provider = st.radio(
-            "Select AI Provider",
-            options=["openai", "anthropic"],
-            format_func=lambda x: "OpenAI (GPT-4o-mini)" if x == "openai" else "Anthropic (Claude 3.5 Sonnet)",
-            horizontal=True,
-            disabled=not has_api,
-        )
-        # Filter to only available providers
-        if provider == "openai" and not api_status["openai"]:
-            provider = "anthropic"
-        elif provider == "anthropic" and not api_status["anthropic"]:
-            provider = "openai"
-    else:
-        st.warning("⚠️ No API keys found. Using template-based generation.")
-        st.info("Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` environment variables for AI-powered generation.")
-        provider = None
-    
-    st.markdown("---")
-    
-    # Input form
-    st.markdown("### Project Details")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        project_name = st.text_input(
-            "Project Name",
-            placeholder="My Awesome Project",
-            help="The name of your project",
-        )
-        
-        tech_stack = st.text_input(
-            "Tech Stack",
-            placeholder="Python, FastAPI, PostgreSQL, React",
-            help="Comma-separated list of technologies",
-        )
-    
-    with col2:
-        architecture_notes = st.text_area(
-            "Architecture Notes",
-            placeholder="Describe your project's architecture...\n\nE.g., 'Monolithic backend with REST API, React frontend with Redux for state management'",
-            height=120,
-            help="Brief description of your architecture",
-        )
-    
-    main_files = st.text_area(
-        "Main Files/Directory Structure",
-        placeholder="""src/
-├── main.py
-├── api/
-│   └── routes.py
-├── models/
-│   └── user.py
-└── utils/
-    └── helpers.py""",
-        height=180,
-        help="Paste your directory tree or list main files",
-    )
-    
-    st.markdown("---")
-    
-    # Generate button
-    if st.button("🚀 Generate project-structure.md", type="primary", use_container_width=True):
-        if not project_name:
-            st.error("Please enter a project name.")
-        else:
-            with st.spinner("Generating..."):
-                if has_api and provider:
-                    # AI-powered generation
-                    try:
-                        result = generate_project_structure_sync(
-                            project_name=project_name,
-                            tech_stack=tech_stack or "Not specified",
-                            main_files=main_files or "Not provided",
-                            architecture_notes=architecture_notes or "Not provided",
-                            provider=provider,
-                        )
-                        if result:
-                            st.session_state.generated_content = result
-                        else:
-                            st.error("Failed to generate. Check your API key.")
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
-                        # Fall back to template
-                        tech_list = [t.strip() for t in tech_stack.split(",")] if tech_stack else []
-                        st.session_state.generated_content = generate_template_based_structure(
-                            project_name=project_name,
-                            tech_stack=tech_list,
-                            main_files=main_files,
-                            architecture_notes=architecture_notes,
-                        )
-                else:
-                    # Template-based generation
-                    tech_list = [t.strip() for t in tech_stack.split(",")] if tech_stack else []
-                    st.session_state.generated_content = generate_template_based_structure(
-                        project_name=project_name,
-                        tech_stack=tech_list,
-                        main_files=main_files,
-                        architecture_notes=architecture_notes,
-                    )
-    
-    # Display generated content
-    if "generated_content" in st.session_state and st.session_state.generated_content:
-        st.markdown("---")
-        st.markdown("### Generated Content")
-        
-        # Preview
-        with st.expander("📄 Preview", expanded=True):
-            st.code(st.session_state.generated_content, language="markdown")
-        
-        # Copy instructions
-        st.markdown("### 📋 How to Use")
-        st.markdown("""
-        1. Copy the content above
-        2. Create a file at `.cursor/rules/project-structure.md` in your project
-        3. Paste the content and save
-        4. The rule will automatically apply to all files (due to `alwaysApply: true`)
-        """)
-        
-        # Download button
-        st.download_button(
-            label="⬇️ Download project-structure.md",
-            data=st.session_state.generated_content,
-            file_name="project-structure.md",
-            mime="text/markdown",
-            use_container_width=True,
-        )
 
 # ============================================================================
 # FOOTER

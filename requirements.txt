@@ -3,14 +3,5 @@
 # Web UI Framework
 streamlit>=1.32.0
 
-# LLM Integration
-langchain>=0.1.0
-langchain-core>=0.1.0
-langchain-openai>=0.0.5
-langchain-anthropic>=0.1.0
-
 # YAML Parsing (for frontmatter)
 pyyaml>=6.0
-
-# Utilities
-python-dotenv>=1.0.0

@@ -4,18 +4,17 @@ A Streamlit-based educational application that helps developers understand and l
 
 ## ✨ Features
 
-- **📚 Learn the Difference** — Clear explanations of Cursor Commands vs Rules with side-by-side comparisons
-- **🤖 AI-Powered Generation** — Generate project-specific rules tailored to your codebase using LLM prompts
+- **📊 Learn the Difference** — Clear explanations of Cursor Commands vs Rules with side-by-side comparisons
+- **✨ AI Generation Prompts** — Ready-to-use prompts to generate project-specific rules using Cursor's built-in AI
 - **⚡ Ready-to-Use Commands** — Generic slash commands that work with any project
-- **🔗 Curated Resources** — Links to verified official documentation and community resources
-- **🏗️ Interactive Generator** — Create `project-structure.md` files for your own projects
+- **🔗 Verified Resources** — Links to official Cursor documentation and curated community resources
+- **📁 Live Examples** — Real example files from this project's `.cursor/` directory
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- OpenAI API key or Anthropic API key
 
 ### Installation
 
@@ -41,15 +40,7 @@ A Streamlit-based educational application that helps developers understand and l
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables**
-   ```bash
-   # Create a .env file or export directly
-   export OPENAI_API_KEY=your_openai_key
-   # OR
-   export ANTHROPIC_API_KEY=your_anthropic_key
-   ```
-
-5. **Run the app**
+4. **Run the app**
    ```bash
    streamlit run cursor_docs_app.py
    ```
@@ -58,10 +49,9 @@ A Streamlit-based educational application that helps developers understand and l
 
 ```
 cursor_rules_commands/
-├── cursor_docs_app.py        # Main Streamlit entry point (6 tabs)
+├── cursor_docs_app.py        # Main Streamlit entry point (5 tabs)
 ├── cursor_docs_content.py    # Content definitions, resources, examples
-├── llm.py                    # LangChain LLM integration
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Python dependencies (streamlit, pyyaml)
 ├── .gitignore               # Git ignore patterns
 │
 └── .cursor/
@@ -70,8 +60,6 @@ cursor_rules_commands/
     │   ├── write-tests.md                 # /write-tests
     │   ├── debug.md                       # /debug
     │   └── explain.md                     # /explain
-    ├── plans/
-    │   └── *.plan.md                      # Cursor plan files
     └── rules/
         ├── cursor-rules.md                # Meta rule about writing rules
         └── project-structure.md           # Project architecture (alwaysApply)
@@ -82,15 +70,7 @@ cursor_rules_commands/
 | Technology | Purpose |
 |------------|---------|
 | **Streamlit** | Web UI framework |
-| **LangChain** | LLM orchestration |
-| **OpenAI / Anthropic** | AI model providers |
-
-## 🔧 Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `OPENAI_API_KEY` | API key for OpenAI models (GPT-4, etc.) |
-| `ANTHROPIC_API_KEY` | API key for Anthropic models (Claude) |
+| **PyYAML** | YAML frontmatter parsing |
 
 ## 📖 What are Cursor Commands & Rules?
 
@@ -98,7 +78,17 @@ cursor_rules_commands/
 Slash commands (like `/explain` or `/debug`) that you can invoke in Cursor's chat. They're stored in `.cursor/commands/` as markdown files.
 
 ### Rules
-Background context that Cursor's AI always considers when working with your code. They're stored in `.cursor/rules/` and can be configured to apply globally or to specific file patterns.
+Background context that Cursor's AI always considers when working with your code. They're stored in `.cursor/rules/` and can be configured to apply globally or to specific file patterns using YAML frontmatter.
+
+## 🔗 Resources
+
+### Official Documentation
+- [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
+- [Cursor Commands Documentation](https://cursor.com/docs/context/commands)
+
+### Community
+- [cursor.directory](https://cursor.directory) - Browse community rules
+- [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - GitHub collection (8k+ stars)
 
 ## 🤝 Contributing
 

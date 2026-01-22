@@ -19,10 +19,9 @@ This is a Streamlit-based educational application that:
 
 ```
 cursor_rules_commands/
-├── cursor_docs_app.py        # Main Streamlit entry point (6 tabs)
+├── cursor_docs_app.py        # Main Streamlit entry point (5 tabs)
 ├── cursor_docs_content.py    # Content definitions, resources, examples
-├── llm.py                    # LangChain LLM integration
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Python dependencies (streamlit, pyyaml)
 ├── .gitignore               # Git ignore patterns
 ├── venv/                     # Python virtual environment
 │
@@ -41,15 +40,14 @@ cursor_rules_commands/
 
 ## Architecture
 
-- **UI Layer**: Streamlit with tabbed interface
-- **Logic Layer**: Content module + LLM module
+- **UI Layer**: Streamlit with 5-tab interface
+- **Logic Layer**: Content module with definitions, resources, and examples
 - **Data Sources**: Live `.cursor/` directory files
 
 ## Key Technologies
 
 - **Streamlit** - Web UI framework
-- **LangChain** - LLM orchestration
-- **OpenAI/Anthropic** - AI model providers
+- **PyYAML** - YAML frontmatter parsing
 
 ## Running the Application
 
@@ -66,8 +64,3 @@ pip install -r requirements.txt
 # Run the app
 streamlit run cursor_docs_app.py
 ```
-
-## Environment Variables
-
-- `OPENAI_API_KEY` - For OpenAI models
-- `ANTHROPIC_API_KEY` - For Claude models
