@@ -1,6 +1,6 @@
-# Cursor Docs Explainer App
+# 🚀 Cursor Kickstart
 
-A Streamlit-based educational application that helps developers understand and leverage Cursor IDE's powerful customization features — Commands and Rules.
+A Streamlit app that helps developers **master Cursor Rules & Commands** — from zero to productive in minutes.
 
 ## ✨ Features
 

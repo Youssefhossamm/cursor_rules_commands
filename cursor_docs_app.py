@@ -1,9 +1,8 @@
 """
-Cursor Commands vs Rules Explainer App
+Cursor Kickstart
 
-A Streamlit application that educates developers on the differences between
-Cursor Commands and Rules, provides real examples, AI prompts for generation,
-and links to verified resources.
+A Streamlit app that helps developers master Cursor Rules & Commands —
+from zero to productive in minutes.
 
 Run with: streamlit run cursor_docs_app.py
 """
@@ -29,8 +28,8 @@ from cursor_docs_content import (
 # ============================================================================
 
 st.set_page_config(
-    page_title="Cursor Commands vs Rules",
-    page_icon="📚",
+    page_title="Cursor Kickstart",
+    page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -313,13 +312,13 @@ st.markdown("""
         margin-bottom: 0.5rem;
         color: #1f2937;
         font-weight: 700;
-    ">📚 Cursor Commands vs Rules</h1>
+    ">🚀 Cursor Kickstart</h1>
     <p style="
         font-size: 1.1rem; 
         color: #6b7280; 
         max-width: 600px; 
         margin: 0 auto;
-    ">Master Cursor's customization features to supercharge your AI-assisted coding</p>
+    ">Master Cursor Rules & Commands — from zero to productive in minutes</p>
 </div>
 """, unsafe_allow_html=True)
 

@@ -1,14 +1,14 @@
 ---
-description: Project structure and architecture overview for the Cursor Docs Explainer App
+description: Project structure and architecture overview for Cursor Kickstart
 globs: []
 alwaysApply: true
 ---
 
-# Project Structure: Cursor Docs Explainer App
+# Project Structure: Cursor Kickstart
 
 ## Overview
 
-This is a Streamlit-based educational application that:
+A Streamlit app that helps developers master Cursor Rules & Commands. It:
 - Explains the differences between Cursor Commands and Rules
 - Provides AI-powered prompts to generate project-specific rules
 - Includes ready-to-use generic commands for any project
