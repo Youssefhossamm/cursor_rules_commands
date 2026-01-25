@@ -1,0 +1,8 @@
+[theme]
+# Light theme with professional accent colors
+base = "light"
+primaryColor = "#4a7c94"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#eef1f5"
+textColor = "#1f2937"
+font = "sans serif"

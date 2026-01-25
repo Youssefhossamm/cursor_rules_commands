@@ -41,153 +41,226 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Import distinctive fonts */
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
+    /* ===== UI ENHANCEMENTS ===== */
     
-    /* Root variables for theming */
-    :root {
-        --bg-primary: #0d1117;
-        --bg-secondary: #161b22;
-        --bg-tertiary: #21262d;
-        --accent-cyan: #58a6ff;
-        --accent-green: #3fb950;
-        --accent-orange: #f0883e;
-        --accent-purple: #a371f7;
-        --accent-pink: #f778ba;
-        --text-primary: #e6edf3;
-        --text-secondary: #8b949e;
-        --border-color: #30363d;
-    }
-    
-    /* Main container styling */
+    /* Container width */
     .main .block-container {
-        padding-top: 2rem;
         max-width: 1200px;
     }
     
-    /* Headers with Outfit font */
-    h1, h2, h3 {
-        font-family: 'Outfit', sans-serif !important;
-        font-weight: 600 !important;
-    }
+    /* === CARDS with hover effects === */
     
-    h1 {
-        background: linear-gradient(135deg, #58a6ff 0%, #a371f7 50%, #f778ba 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 2.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Code blocks with JetBrains Mono */
-    code, .stCode, pre {
-        font-family: 'JetBrains Mono', monospace !important;
-    }
-    
-    /* Custom card styling */
-    .info-card {
-        background: linear-gradient(145deg, rgba(88, 166, 255, 0.1) 0%, rgba(163, 113, 247, 0.05) 100%);
-        border: 1px solid rgba(88, 166, 255, 0.3);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-    
-    .command-card {
-        background: linear-gradient(145deg, rgba(240, 136, 62, 0.1) 0%, rgba(247, 120, 186, 0.05) 100%);
-        border: 1px solid rgba(240, 136, 62, 0.3);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-    
+    /* Rules card - green/teal accent */
     .rule-card {
-        background: linear-gradient(145deg, rgba(63, 185, 80, 0.1) 0%, rgba(88, 166, 255, 0.05) 100%);
-        border: 1px solid rgba(63, 185, 80, 0.3);
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border: 1px solid #86efac;
         border-radius: 12px;
         padding: 1.5rem;
-        margin: 1rem 0;
+        margin: 0.75rem 0;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: transparent;
+    .rule-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+        border-color: #22c55e;
     }
     
-    .stTabs [data-baseweb="tab"] {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 500;
-        padding: 12px 24px;
-        border-radius: 8px 8px 0 0;
+    .rule-card h3 {
+        color: #16a34a !important;
+        margin-top: 0 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     
-    /* Comparison table styling */
-    .comparison-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+    /* Commands card - amber/orange accent */
+    .command-card {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #fcd34d;
         border-radius: 12px;
-        overflow: hidden;
+        padding: 1.5rem;
+        margin: 0.75rem 0;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    /* Annotation boxes */
+    .command-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
+        border-color: #f59e0b;
+    }
+    
+    .command-card h3 {
+        color: #d97706 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Info card - blue accent */
+    .info-card {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 0.75rem 0;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+    }
+    
+    .info-card h4, .info-card strong {
+        color: #2563eb !important;
+    }
+    
+    /* === Annotation boxes === */
     .annotation {
-        background: rgba(163, 113, 247, 0.1);
-        border-left: 3px solid #a371f7;
-        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border-left: 4px solid #6366f1;
+        padding: 0.875rem 1rem;
         margin: 0.5rem 0;
         border-radius: 0 8px 8px 0;
         font-size: 0.9rem;
+        color: #374151;
+        transition: background 0.2s ease;
     }
     
-    /* Quick tip styling */
-    .quick-tip {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-        padding: 0.75rem;
-        background: rgba(88, 166, 255, 0.05);
-        border-radius: 8px;
-        margin: 0.5rem 0;
+    .annotation:hover {
+        background: #f1f5f9;
     }
     
-    .quick-tip::before {
-        content: "💡";
-        font-size: 1.1rem;
+    .annotation strong {
+        color: #4f46e5;
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, rgba(13, 17, 23, 0.95) 0%, rgba(22, 27, 34, 0.95) 100%);
+    .annotation code {
+        background: #e0e7ff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #4338ca;
+        font-size: 0.85em;
     }
     
-    /* Button styling */
+    .annotation em {
+        color: #6b7280;
+    }
+    
+    /* === Buttons with hover === */
     .stButton > button {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 500;
         border-radius: 8px;
+        font-weight: 500;
         transition: all 0.2s ease;
     }
     
     .stButton > button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(74, 124, 148, 0.25);
     }
     
-    /* Expander styling */
+    /* === Download buttons === */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border: 1px solid #6ee7b7 !important;
+        color: #047857 !important;
+        transition: all 0.2s ease;
+    }
+    
+    .stDownloadButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        border-color: #10b981 !important;
+    }
+    
+    /* === Expanders with polish === */
     .streamlit-expanderHeader {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 500;
+        border-radius: 8px;
+        transition: background 0.2s ease;
     }
     
-    /* Copy button area */
-    .copy-area {
-        position: relative;
-        background: #161b22;
+    .streamlit-expanderHeader:hover {
+        background: #f1f5f9;
+    }
+    
+    /* === Tables with hover rows === */
+    tr {
+        transition: background 0.15s ease;
+    }
+    
+    tr:hover td {
+        background: #f8fafc !important;
+    }
+    
+    th {
+        background: #f1f5f9 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* === Links with underline animation === */
+    a {
+        transition: color 0.2s ease;
+    }
+    
+    /* === Code blocks === */
+    code {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+        background: #f1f5f9;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    
+    /* === Subtle dividers === */
+    hr {
+        border: none !important;
+        height: 1px !important;
+        background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent) !important;
+        margin: 1.5rem 0 !important;
+    }
+    
+    /* === Sidebar polish === */
+    [data-testid="stSidebar"] a:hover {
+        color: #2563eb !important;
+    }
+    
+    /* Sidebar dividers - more visible */
+    [data-testid="stSidebar"] hr {
+        background: #c9d1d9 !important;
+        height: 1px !important;
+        margin: 1rem 0 !important;
+    }
+    
+    /* === Tabs - more visible === */
+    .stTabs [data-baseweb="tab-list"] {
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 10px;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
-        padding: 1rem;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #e2e8f0;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -233,8 +306,22 @@ with st.sidebar:
 # MAIN CONTENT
 # ============================================================================
 
-st.markdown("# Cursor Commands vs Rules")
-st.markdown("*Master Cursor's customization features to supercharge your AI-assisted coding*")
+st.markdown("""
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h1 style="
+        font-size: 2.5rem; 
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+        font-weight: 700;
+    ">📚 Cursor Commands vs Rules</h1>
+    <p style="
+        font-size: 1.1rem; 
+        color: #6b7280; 
+        max-width: 600px; 
+        margin: 0 auto;
+    ">Master Cursor's customization features to supercharge your AI-assisted coding</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Create tabs
 tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources = st.tabs([
@@ -748,16 +835,22 @@ with tab_resources:
 
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #8b949e; padding: 1rem;">
-    <p>Built with ❤️ using Streamlit</p>
-    <p style="font-size: 0.85rem;">
-        📘 <a href="https://docs.cursor.com/context/rules-for-ai" target="_blank">Official Rules Docs</a> |
-        📗 <a href="https://cursor.com/docs/context/commands" target="_blank">Official Commands Docs</a> |
-        🌐 <a href="https://cursor.directory" target="_blank">cursor.directory</a> |
-        ⭐ <a href="https://github.com/PatrickJS/awesome-cursorrules" target="_blank">awesome-cursorrules</a>
+<div style="text-align: center; padding: 1.5rem 1rem;">
+    <p style="font-size: 0.95rem; margin-bottom: 1rem; color: #6b7280;">
+        Built with ❤️ using Streamlit
     </p>
-    <p style="font-size: 0.75rem; margin-top: 0.5rem;">
-        Examples marked "Official" are from Cursor's documentation. Community examples are from cursor.directory and awesome-cursorrules.
+    <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <a href="https://docs.cursor.com/context/rules-for-ai" target="_blank" 
+           style="color: #2563eb; text-decoration: none; font-weight: 500;">📘 Rules Docs</a>
+        <a href="https://cursor.com/docs/context/commands" target="_blank" 
+           style="color: #16a34a; text-decoration: none; font-weight: 500;">📗 Commands Docs</a>
+        <a href="https://cursor.directory" target="_blank" 
+           style="color: #d97706; text-decoration: none; font-weight: 500;">🌐 cursor.directory</a>
+        <a href="https://github.com/PatrickJS/awesome-cursorrules" target="_blank" 
+           style="color: #7c3aed; text-decoration: none; font-weight: 500;">⭐ awesome-cursorrules</a>
+    </div>
+    <p style="font-size: 0.75rem; color: #9ca3af; max-width: 600px; margin: 0 auto;">
+        Official examples from Cursor docs · Community examples from cursor.directory
     </p>
 </div>
 """, unsafe_allow_html=True)
