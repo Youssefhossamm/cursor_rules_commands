@@ -58,4 +58,17 @@ except SpecificError as e:
 - Deprecate rules that no longer apply
 - Cross-reference related rules
 
+## Documentation Sync
+
+Keep these files in sync when project structure changes:
+- `README.md` ↔ `.cursor/rules/project-structure.md`
+
+**Trigger sync when:**
+- New directories or key files added
+- Tech stack changes (new dependencies)
+- Run/build commands change
+- Architecture decisions made
+
+Use `/sync-docs` command to update both files together.
+
 See @.cursor/rules/cursor-rules.md for formatting guidelines.

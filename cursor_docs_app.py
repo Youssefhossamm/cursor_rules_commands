@@ -904,7 +904,7 @@ with tab_commands:
     categories = {
         "Code Quality": ["code-review-checklist", "refactor", "explain"],
         "Development": ["write-tests", "debug", "optimize"],
-        "Workflow": ["create-pr", "commit", "document"],
+        "Workflow": ["create-pr", "commit", "document", "sync-docs"],
         "Security": ["security-audit"],
     }
     

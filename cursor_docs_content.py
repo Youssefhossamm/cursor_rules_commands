@@ -819,6 +819,41 @@ Fixes #456
 Please analyze the staged changes and generate an appropriate commit message.
 """,
     },
+    "sync-docs": {
+        "name": "Sync Documentation",
+        "description": "Update README.md and project-structure.md together",
+        "content": """# Sync Documentation
+
+## Overview
+Update both README.md and project-structure.md to reflect current project state.
+
+## Instructions
+
+Analyze the current project and update documentation:
+
+### 1. Update `.cursor/rules/project-structure.md`
+- Scan directory structure (2 levels deep)
+- Update tech stack if dependencies changed
+- Update run commands if changed
+- Keep under 80 lines
+
+### 2. Update `README.md`
+- Sync project description with project-structure.md
+- Update installation/setup instructions
+- Update usage examples if needed
+- Keep human-friendly (more detail than rules file)
+
+### 3. Ensure Consistency
+- Project name matches in both files
+- Tech stack listed in both
+- Run commands identical in both
+- Directory structure aligned
+
+## Output
+
+Show a summary of changes made to each file.
+""",
+    },
 }
 
 

@@ -61,7 +61,9 @@ cursor_rules_commands/
     │   ├── debug.md                       # /debug
     │   ├── explain.md                     # /explain
     │   ├── run-app.md                     # /run-app - Start app in venv
-    │   └── stop-app.md                    # /stop-app - Stop running app
+    │   ├── stop-app.md                    # /stop-app - Stop running app
+    │   └── sync-docs.md                   # /sync-docs - Sync README & rules
+    ├── plans/                              # Cursor plan files
     └── rules/
         ├── cursor-rules.md                # Meta rule about writing rules
         ├── project-structure.md           # Project architecture (alwaysApply)
