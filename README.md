@@ -59,10 +59,13 @@ cursor_rules_commands/
     │   ├── code-review-checklist.md       # /code-review-checklist
     │   ├── write-tests.md                 # /write-tests
     │   ├── debug.md                       # /debug
-    │   └── explain.md                     # /explain
+    │   ├── explain.md                     # /explain
+    │   ├── run-app.md                     # /run-app - Start app in venv
+    │   └── stop-app.md                    # /stop-app - Stop running app
     └── rules/
         ├── cursor-rules.md                # Meta rule about writing rules
-        └── project-structure.md           # Project architecture (alwaysApply)
+        ├── project-structure.md           # Project architecture (alwaysApply)
+        └── rule-self-improvement.md       # Meta rule for evolving rules
 ```
 
 ## 🛠️ Tech Stack
