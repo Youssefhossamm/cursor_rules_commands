@@ -30,7 +30,7 @@ wheels/
 .vscode/
 *.swp
 *.swo
-
+.cursor/plans/
 # Environment variables
 .env
 .env.local
