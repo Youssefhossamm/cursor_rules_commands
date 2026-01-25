@@ -325,6 +325,37 @@ PROMPT_TEMPLATES = {
             "prompt": """@Codebase Analyze the UI components, their structure, and patterns used. Create a cursor rule documenting component architecture, state management patterns, and styling conventions.""",
             "output_file": ".cursor/rules/component-architecture.md",
         },
+        {
+            "name": "Rule Self-Improvement",
+            "description": "Generate a meta-rule that keeps your rules evolving with your codebase",
+            "prompt": """@.cursor/rules/cursor-rules.md @Codebase
+
+Create a rule-self-improvement.md that helps keep Cursor rules updated as this project evolves.
+
+Analyze the codebase and include:
+
+1. **Project-specific triggers** for when to add/update rules:
+   - Common patterns unique to THIS project
+   - Repeated code structures you found
+   - Error handling patterns used here
+
+2. **Pattern recognition examples** using ACTUAL code from this project:
+   - Show 2-3 real repeated patterns you found
+   - Explain which rule file they belong in
+
+3. **Quality checklist** tailored to this project's tech stack
+
+4. **Update triggers** specific to this project:
+   - Key files that when changed should trigger rule review
+   - Dependencies that affect coding patterns
+
+CONSTRAINTS:
+- Keep under 70 lines
+- Use real examples from this codebase
+- Reference existing rule files if any
+- Use alwaysApply: true""",
+            "output_file": ".cursor/rules/rule-self-improvement.md",
+        },
     ],
     "commands": [
         {

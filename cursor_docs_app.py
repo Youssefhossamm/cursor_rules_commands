@@ -323,14 +323,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Tab names for navigation
+TAB_NAMES = ["📊 Overview", "📁 Live Examples", "✨ AI Prompts", "⚡ Commands", "🔗 Resources"]
+
 # Create tabs
-tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources = st.tabs([
-    "📊 Overview", 
-    "📁 Live Examples",
-    "✨ AI Prompts",
-    "⚡ Commands",
-    "🔗 Resources"
-])
+tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources = st.tabs(TAB_NAMES)
 
 # ============================================================================
 # TAB 1: OVERVIEW
@@ -428,6 +425,193 @@ with tab_overview:
         - Performing specific tasks
         - Creating reusable workflows
         """)
+    
+    st.markdown("---")
+    
+    # =========================================================================
+    # FILE SIZE GUIDELINES
+    # =========================================================================
+    
+    st.markdown("## 📏 Rule File Size Guidelines")
+    
+    col_size1, col_size2 = st.columns([2, 1])
+    
+    with col_size1:
+        st.markdown("""
+        | Rule Type | Recommended Size | Notes |
+        |-----------|------------------|-------|
+        | Single rule file | **50-150 lines** | Keeps context focused |
+        | `alwaysApply: true` rules | **Keep minimal!** | Always consumes context |
+        | Total active rules | ~2000-3000 tokens | Leaves room for your code |
+        """)
+    
+    with col_size2:
+        st.markdown("""
+        <div class="info-card" style="text-align: center;">
+            <strong>📐 Rule of Thumb</strong><br/><br/>
+            <em>If your rule file is longer than your average source file, it's too long.</em>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    **💡 Best Practices:** Multiple small focused rules > one giant rule • Use `globs` to load rules only when needed • Bullet points > paragraphs
+    """)
+    
+    st.markdown("---")
+    
+    # =========================================================================
+    # QUICK START SECTION - Interactive Getting Started Guide
+    # =========================================================================
+    
+    st.markdown("## 🚀 Quick Start: Set Up Your Project")
+    st.markdown("""
+    <div class="info-card">
+        <p style="margin-bottom: 1rem;"><strong>New to Cursor Rules & Commands?</strong> Follow these 4 steps to supercharge your AI-assisted coding!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Step 1: Create directory structure
+    st.markdown("### Step 1: Create the `.cursor/` Directory Structure")
+    st.code("""
+# In your project root, create:
+.cursor/
+├── rules/      # For persistent AI context
+└── commands/   # For on-demand actions
+    """, language="text")
+    
+    col_step1a, col_step1b = st.columns(2)
+    with col_step1a:
+        st.markdown("""
+        <div class="rule-card">
+            <strong>📋 Rules Folder</strong><br/>
+            <code>.cursor/rules/</code><br/>
+            <em>Markdown files with YAML frontmatter</em>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_step1b:
+        st.markdown("""
+        <div class="command-card">
+            <strong>⚡ Commands Folder</strong><br/>
+            <code>.cursor/commands/</code><br/>
+            <em>Markdown files → /slash-commands</em>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("")
+    
+    # Step 2: Create the META rule (cursor-rules.md)
+    st.markdown("### Step 2: Create the Meta Rule (`cursor-rules.md`)")
+    st.markdown("""
+    **First, teach Cursor AI how to write rules!** This "meta rule" establishes the pattern for all future rules.
+    """)
+    
+    with st.expander("📄 **Copy this cursor-rules.md template**", expanded=True):
+        cursor_rules_template = """---
+description: Guidelines for writing effective Cursor rules
+globs: 
+  - "**/*.md"
+  - ".cursor/rules/*"
+alwaysApply: false
+---
+
+# Cursor Rules Best Practices
+
+## Rule Structure
+
+Every rule file must include:
+1. **YAML Frontmatter** - Metadata controlling when/how the rule applies
+2. **Markdown Content** - Clear, actionable instructions
+
+## Frontmatter Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `description` | string | Brief summary shown in Cursor UI |
+| `globs` | array | File patterns that trigger this rule |
+| `alwaysApply` | boolean | If true, always includes this rule |
+
+## Best Practices
+
+- Keep rules focused on a single concern
+- Use specific globs to avoid noise
+- Write clear, actionable instructions
+- Keep content concise (avoid overwhelming detail)
+- Include examples where helpful"""
+        st.code(cursor_rules_template, language="markdown")
+        st.download_button(
+            label="⬇️ Download cursor-rules.md",
+            data=cursor_rules_template,
+            file_name="cursor-rules.md",
+            mime="text/markdown",
+            key="download_cursor_rules_template",
+        )
+    
+    st.success("📍 **Save this to:** `.cursor/rules/cursor-rules.md`")
+    
+    # Step 3: Generate project-structure.md using AI
+    st.markdown("### Step 3: Generate `project-structure.md` with AI")
+    st.markdown("""
+    Now use Cursor AI to create a rule documenting your project! The AI will follow the meta rule you just created.
+    """)
+    
+    st.markdown("**Copy this prompt into Cursor Chat:**")
+    
+    bootstrap_prompt_quick = """@.cursor/rules/cursor-rules.md Analyze this project and create a project-structure.md rule.
+
+CONSTRAINTS:
+- Keep it under 80 lines total
+- Focus on high-level architecture only
+- List only main directories (max 2 levels deep)
+- Summarize tech stack in bullet points
+- Do NOT list every file - just key entry points
+
+Include: Overview, Directory Layout, Tech Stack, How to Run."""
+    
+    st.code(bootstrap_prompt_quick, language="text")
+    
+    st.info("💡 **Why this works:** The `@.cursor/rules/cursor-rules.md` reference teaches the AI your rule format before it generates the new rule!")
+    
+    # Step 4: Add Ready-to-Use Commands
+    st.markdown("### Step 4: Add Ready-to-Use Commands")
+    st.markdown("""
+    Commands are reusable actions triggered with `/command-name` in chat.
+    """)
+    
+    col_cmd1, col_cmd2, col_cmd3 = st.columns(3)
+    with col_cmd1:
+        st.markdown("""
+        <div class="command-card" style="min-height: 100px;">
+            <strong>/code-review-checklist</strong><br/>
+            <em>Systematic code review</em>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_cmd2:
+        st.markdown("""
+        <div class="command-card" style="min-height: 100px;">
+            <strong>/write-tests</strong><br/>
+            <em>Generate test cases</em>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_cmd3:
+        st.markdown("""
+        <div class="command-card" style="min-height: 100px;">
+            <strong>/debug</strong><br/>
+            <em>Systematic debugging</em>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.success("👉 **Go to the ⚡ Commands tab** to download ready-to-use commands!")
+    
+    # What's Next
+    st.markdown("### 📚 What's Next?")
+    st.markdown("""
+    | Want to... | Go to... |
+    |------------|----------|
+    | See real examples from this project | **📁 Live Examples** tab |
+    | Generate more rules (coding standards, API conventions) | **✨ AI Prompts** tab |
+    | Download all ready-made commands | **⚡ Commands** tab |
+    | Find rules for React, Python, Go, etc. | **🔗 Resources** tab |
+    """)
 
 # ============================================================================
 # TAB 2: LIVE EXAMPLES
@@ -544,8 +728,7 @@ with tab_prompts:
             st.markdown(f"""
             1. Copy the prompt above
             2. Open Cursor chat (Cmd/Ctrl + L)
-            3. Paste the prompt and press Enter
-            4. Save the AI's response to `{prompt_data['output_file']}`
+            3. Paste and press Enter — Cursor creates `{prompt_data['output_file']}` automatically
             """)
     
     st.markdown("---")
@@ -565,47 +748,134 @@ with tab_prompts:
             st.markdown(f"""
             1. Copy the prompt above
             2. Open Cursor chat (Cmd/Ctrl + L)
-            3. Paste the prompt and press Enter
-            4. Save the AI's response to `{prompt_data['output_file']}`
+            3. Paste and press Enter — Cursor creates `{prompt_data['output_file']}` automatically
             """)
     
     st.markdown("---")
     
-    # Quick start guide
-    st.markdown("### 🚀 Quick Start: Set Up Your Project")
+    # Bootstrap prompt - Most important prompt, kept prominently
+    st.markdown("### 🎯 One-Shot Bootstrap Prompt")
+    st.markdown("""
+    Use this optimized prompt to generate a `project-structure.md` rule. 
+    **Includes constraints** to keep output concise even for large projects.
+    """)
+    
     st.markdown("""
     <div class="info-card">
-        <h4>Recommended Setup Steps</h4>
-        <ol>
-            <li><strong>Create the cursor rules template:</strong><br/>
-                First, create <code>.cursor/rules/cursor-rules.md</code> with basic frontmatter documentation</li>
-            <li><strong>Generate project structure:</strong><br/>
-                Use the "Project Structure Rule" prompt to document your codebase</li>
-            <li><strong>Add tech-specific rules:</strong><br/>
-                Use "Tech Stack Guidelines" or "Coding Standards" prompts</li>
-            <li><strong>Set up common commands:</strong><br/>
-                Copy generic commands from the "Generic Commands" tab</li>
-        </ol>
+        <strong>⚠️ Important:</strong> First create <code>.cursor/rules/cursor-rules.md</code> (see Quick Start in Overview tab). 
+        This prompt references it to ensure consistent formatting.
     </div>
     """, unsafe_allow_html=True)
     
-    # Bootstrap prompt
-    st.markdown("### 🎯 One-Shot Bootstrap Prompt")
-    st.markdown("Use this single prompt to set up Cursor rules for a new project:")
-    
-    bootstrap_prompt = """@Codebase I want to set up Cursor AI rules for this project. Please:
+    bootstrap_prompt = """@.cursor/rules/cursor-rules.md @Codebase
 
-1. Analyze the project structure, tech stack, and coding patterns
-2. Create a comprehensive project-structure.md rule with:
-   - Directory layout
-   - Key files and their purposes
-   - Architecture overview
-   - Tech stack summary
-3. Use YAML frontmatter with alwaysApply: true
+Create a project-structure.md rule for this project.
 
-Format the output as a complete .cursor/rules/project-structure.md file."""
+## CONSTRAINTS (IMPORTANT):
+- Maximum 100 lines total
+- Directory tree: max 2 levels deep, only main folders
+- Do NOT list every file - summarize with comments like "# API routes" 
+- Tech stack: bullet points only, no version numbers unless critical
+- Skip boilerplate sections if not applicable
+
+## REQUIRED SECTIONS:
+1. **Overview** (2-3 sentences max)
+2. **Directory Layout** (tree format, annotated)
+3. **Key Technologies** (bullet list)
+4. **Running the App** (essential commands only)
+
+## FORMAT:
+```yaml
+---
+description: Project structure for [name]
+globs: []
+alwaysApply: true
+---
+```
+
+Be concise. Quality over quantity."""
     
     st.code(bootstrap_prompt, language="text")
+    
+    st.markdown("---")
+    
+    # Alternative: Minimal prompt for experienced users
+    st.markdown("### ⚡ Quick Version (for experienced users)")
+    st.markdown("If you already have `cursor-rules.md`, use this minimal prompt:")
+    
+    minimal_prompt = """@.cursor/rules/cursor-rules.md Analyze this project. Create a concise project-structure.md rule (under 80 lines). Focus on: overview, directory layout (2 levels max), tech stack, run commands. Use alwaysApply: true."""
+    
+    st.code(minimal_prompt, language="text")
+    
+    st.markdown("---")
+    
+    # Starter Pack - Generate multiple essential rules
+    st.markdown("### 🎁 Starter Pack Bootstrap")
+    st.markdown("""
+    **New to a project?** Generate all 3 essential rules in one go:
+    """)
+    
+    col_pack1, col_pack2, col_pack3 = st.columns(3)
+    with col_pack1:
+        st.markdown("""
+        <div class="rule-card" style="min-height: 80px; text-align: center;">
+            <strong>📋 cursor-rules.md</strong><br/>
+            <em>Meta rule</em>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_pack2:
+        st.markdown("""
+        <div class="rule-card" style="min-height: 80px; text-align: center;">
+            <strong>🏗️ project-structure.md</strong><br/>
+            <em>Architecture</em>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_pack3:
+        st.markdown("""
+        <div class="rule-card" style="min-height: 80px; text-align: center;">
+            <strong>📝 coding-standards.md</strong><br/>
+            <em>Conventions</em>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("")
+    
+    starter_pack_prompt = """@Codebase
+
+I need to set up Cursor AI rules for this project. Create these 3 essential rule files:
+
+## 1. .cursor/rules/cursor-rules.md (Meta Rule)
+A concise guide for writing Cursor rules (~40 lines):
+- Frontmatter fields (description, globs, alwaysApply)
+- Best practices for rule writing
+- Use alwaysApply: false, globs: [".cursor/rules/*"]
+
+## 2. .cursor/rules/project-structure.md (Architecture)
+Document this project's structure (~60-80 lines):
+- Brief overview (2-3 sentences)
+- Directory layout (2 levels deep max)
+- Key technologies (bullet points)
+- How to run the app
+- Use alwaysApply: true
+
+## 3. .cursor/rules/coding-standards.md (Conventions)
+Based on patterns found in this codebase (~50-60 lines):
+- Naming conventions actually used
+- Code style patterns observed
+- Error handling approach
+- Use globs for relevant file types (e.g., ["**/*.py"] or ["**/*.ts"])
+
+CONSTRAINTS:
+- Each file under 80 lines
+- Use YAML frontmatter for all
+- Include real examples from this codebase
+- Be concise: bullet points > paragraphs
+
+Output each file with a clear separator: --- FILE: path/to/file.md ---"""
+    
+    st.code(starter_pack_prompt, language="text")
+    
+    st.info("💡 **Tip:** After running this, you'll have a complete Cursor rules setup! The AI will analyze your codebase and create tailored rules.")
 
 
 # ============================================================================
@@ -788,6 +1058,124 @@ with tab_resources:
             file_name=f"{selected_tech}-rule.md",
             mime="text/markdown",
             key=f"download_tech_{selected_tech}",
+        )
+    
+    st.markdown("---")
+    
+    # Advanced Topics section
+    st.markdown("### 🔧 Advanced Topics")
+    
+    col_adv1, col_adv2 = st.columns(2)
+    
+    with col_adv1:
+        st.markdown("""
+        <div class="info-card">
+            <h4>🪝 Cursor Hooks</h4>
+            <p>
+                Run scripts <em>before</em> or <em>after</em> AI operations.
+            </p>
+            <p><strong>Use cases:</strong></p>
+            <ul>
+                <li>Auto-format AI-generated code</li>
+                <li>Run linters before committing</li>
+                <li>Log AI interactions</li>
+            </ul>
+            <p style="font-size: 0.85rem; color: #6b7280;">
+                <em>💡 Start with Rules & Commands first.</em>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_adv2:
+        st.markdown("""
+        <div class="rule-card">
+            <h4>🔄 Rule Self-Improvement</h4>
+            <p>
+                A meta-rule that keeps your rules <em>evolving</em> with your codebase.
+            </p>
+            <p><strong>Triggers updates when:</strong></p>
+            <ul>
+                <li>New patterns appear in 3+ files</li>
+                <li>Code reviews repeat same feedback</li>
+                <li>New libraries used consistently</li>
+            </ul>
+            <p style="font-size: 0.85rem; color: #6b7280;">
+                <em>💡 Great for growing projects!</em>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Rule Self-Improvement template download
+    with st.expander("📄 **Download Rule Self-Improvement Template**", expanded=False):
+        rule_self_improvement = """---
+description: Guidelines for continuously improving Cursor rules based on emerging patterns
+globs: []
+alwaysApply: true
+---
+
+# Rule Self-Improvement Guidelines
+
+## When to Add New Rules
+
+- A pattern is used in **3+ files** consistently
+- Common bugs could be prevented by standardization
+- Code reviews repeatedly mention the same feedback
+- New security or performance patterns emerge
+
+## When to Update Existing Rules
+
+- Better examples exist in the codebase
+- Additional edge cases are discovered
+- Implementation details have changed
+- Related rules have been updated
+
+## Pattern Recognition Examples
+
+When you see repeated patterns like:
+
+```python
+# Repeated logging setup
+from utils.logging import get_logger
+logger = get_logger(__name__)
+```
+
+→ Add to `coding-standards.md` with standardized examples.
+
+When you see repeated error handling:
+
+```python
+try:
+    result = await operation()
+except SpecificError as e:
+    logger.error(f"Failed: {e}")
+    raise HTTPException(status_code=500, detail=str(e))
+```
+
+→ Document in your API conventions rule.
+
+## Rule Quality Checklist
+
+- [ ] Rules are actionable and specific
+- [ ] Examples come from actual codebase
+- [ ] Patterns are consistently enforced
+- [ ] No outdated references
+
+## Continuous Improvement
+
+- Monitor code review comments for patterns
+- Update rules after major refactors
+- Deprecate rules that no longer apply
+- Cross-reference related rules
+
+See @.cursor/rules/cursor-rules.md for formatting guidelines."""
+        
+        st.code(rule_self_improvement, language="markdown")
+        st.download_button(
+            label="⬇️ Download rule-self-improvement.md",
+            data=rule_self_improvement,
+            file_name="rule-self-improvement.md",
+            mime="text/markdown",
+            key="download_rule_self_improvement",
         )
     
     st.markdown("---")
