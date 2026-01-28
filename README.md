@@ -20,7 +20,7 @@ A Streamlit app that helps developers **master Cursor Rules & Commands** — fro
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/cursor_rules_commands.git
+   git clone https://github.com/Youssefhossamm/cursor_rules_commands.git
    cd cursor_rules_commands
    ```
 
