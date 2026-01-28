@@ -286,43 +286,206 @@ PROMPT_TEMPLATES = {
         {
             "name": "Project Structure Rule",
             "description": "Generate a rule documenting your project's directory structure",
-            "prompt": """@.cursor/rules/cursor-rules.md List all source files and folders in the project, and create a new cursor rule outlining the directory structure, important files, and their purposes. Use alwaysApply: true in the frontmatter.""",
+            "prompt": """@.cursor/rules/cursor-rules.md @Codebase
+
+Create a project-structure.md rule documenting this project's architecture.
+
+## REQUIRED SECTIONS:
+1. **Overview** - What the project does (2-3 sentences max)
+2. **Directory Layout** - Tree format with annotations
+3. **Key Technologies** - Bullet list of frameworks/tools
+4. **Running the App** - Essential commands only
+
+## CONSTRAINTS:
+- Maximum 80 lines total
+- Directory tree: max 2 levels deep
+- Do NOT list every file - use annotations like "# API routes"
+- Bullet points over paragraphs
+- No version numbers unless critical
+
+## FRONTMATTER:
+```yaml
+---
+description: Project structure for [name]
+globs: []
+alwaysApply: true
+---
+```""",
             "output_file": ".cursor/rules/project-structure.md",
         },
         {
             "name": "Coding Standards Rule",
             "description": "Generate coding standards based on your existing codebase",
-            "prompt": """@Codebase Analyze the coding patterns, naming conventions, and style used in this project. Create a cursor rule that documents these coding standards so the AI maintains consistency. Include examples from the actual codebase.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create a coding-standards.md rule based on patterns found in this codebase.
+
+## REQUIRED SECTIONS:
+1. **Naming Conventions** - Variables, functions, classes, files
+2. **Code Style** - Formatting patterns actually used
+3. **Error Handling** - How errors are handled in this project
+4. **Import Organization** - Import ordering and grouping
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Include 1-2 real code examples from THIS codebase
+- Bullet points only, no lengthy explanations
+- Focus on patterns that repeat across 3+ files
+
+## FRONTMATTER:
+```yaml
+---
+description: Coding standards for [project name]
+globs: ["**/*.[ext]"]  # Use actual file extensions
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/coding-standards.md",
         },
         {
             "name": "Tech Stack Guidelines",
             "description": "Generate guidelines specific to your tech stack",
-            "prompt": """@Codebase Identify all frameworks, libraries, and tools used in this project (check package.json, requirements.txt, go.mod, etc.). Create a cursor rule with best practices and patterns specific to this tech stack.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create a tech-stack.md rule with best practices for this project's technologies.
+
+## REQUIRED SECTIONS:
+1. **Core Technologies** - Main frameworks/libraries with versions
+2. **Project Patterns** - How these technologies are used HERE
+3. **Best Practices** - Framework-specific patterns to follow
+4. **Anti-patterns** - What to avoid (if observed in codebase)
+
+## CONSTRAINTS:
+- Maximum 70 lines total
+- Check package.json, requirements.txt, go.mod, Cargo.toml, etc.
+- Include only technologies actively used
+- 1 example per major technology max
+- Bullet points over prose
+
+## FRONTMATTER:
+```yaml
+---
+description: Tech stack guidelines for [project name]
+globs: []
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/tech-stack.md",
         },
         {
             "name": "API Design Rule",
             "description": "Document API patterns and conventions",
-            "prompt": """@Codebase Analyze the API endpoints, request/response patterns, and error handling in this project. Create a cursor rule documenting the API design conventions to maintain consistency.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create an api-conventions.md rule documenting API patterns in this project.
+
+## REQUIRED SECTIONS:
+1. **Endpoint Patterns** - URL structure and naming
+2. **Request/Response** - Standard formats used
+3. **Error Handling** - Error response structure
+4. **Authentication** - Auth patterns (if applicable)
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Include 1 real endpoint example from codebase
+- Focus on patterns, not exhaustive documentation
+- Skip sections not applicable to this project
+
+## FRONTMATTER:
+```yaml
+---
+description: API conventions for [project name]
+globs: ["**/routes/**", "**/api/**", "**/controllers/**"]
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/api-conventions.md",
         },
         {
             "name": "Testing Conventions Rule",
             "description": "Document testing patterns and requirements",
-            "prompt": """@Codebase Analyze the test files and testing patterns used in this project. Create a cursor rule documenting the testing conventions, including file naming, test structure, mocking patterns, and coverage expectations.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create a testing-conventions.md rule based on test patterns in this project.
+
+## REQUIRED SECTIONS:
+1. **File Structure** - Test file naming and location
+2. **Test Patterns** - How tests are structured
+3. **Mocking** - Mocking patterns used
+4. **Run Commands** - How to run tests
+
+## CONSTRAINTS:
+- Maximum 50 lines total
+- Include 1 real test example from codebase
+- Only document patterns that exist in the project
+- Skip if no tests exist (note this instead)
+
+## FRONTMATTER:
+```yaml
+---
+description: Testing conventions for [project name]
+globs: ["**/*test*", "**/*spec*", "**/tests/**"]
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/testing-conventions.md",
         },
         {
             "name": "Database & Models Rule",
             "description": "Document data models and database patterns",
-            "prompt": """@Codebase Analyze the database models, schemas, and data access patterns. Create a cursor rule documenting the data modeling conventions, relationships, and query patterns used in this project.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create a data-models.md rule documenting database patterns in this project.
+
+## REQUIRED SECTIONS:
+1. **Data Models** - Key models/schemas overview
+2. **Relationships** - How models relate
+3. **Query Patterns** - Common query approaches
+4. **Migrations** - How schema changes are handled
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Include 1 model example from codebase
+- Focus on patterns, not full schema documentation
+- Skip sections not applicable
+
+## FRONTMATTER:
+```yaml
+---
+description: Data modeling conventions for [project name]
+globs: ["**/models/**", "**/schemas/**", "**/entities/**"]
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/data-models.md",
         },
         {
             "name": "Component Architecture Rule",
             "description": "Document UI component patterns (for frontend projects)",
-            "prompt": """@Codebase Analyze the UI components, their structure, and patterns used. Create a cursor rule documenting component architecture, state management patterns, and styling conventions.""",
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+
+Create a component-architecture.md rule for UI patterns in this project.
+
+## REQUIRED SECTIONS:
+1. **Component Structure** - File organization and naming
+2. **State Management** - How state is handled
+3. **Styling** - CSS/styling approach used
+4. **Props Patterns** - How props are typed and passed
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Include 1 component example from codebase
+- Focus on patterns used consistently
+- Skip if not a frontend project
+
+## FRONTMATTER:
+```yaml
+---
+description: Component architecture for [project name]
+globs: ["**/components/**", "**/*.tsx", "**/*.jsx"]
+alwaysApply: false
+---
+```""",
             "output_file": ".cursor/rules/component-architecture.md",
         },
         {
@@ -330,30 +493,28 @@ PROMPT_TEMPLATES = {
             "description": "Generate a meta-rule that keeps your rules evolving with your codebase",
             "prompt": """@.cursor/rules/cursor-rules.md @Codebase
 
-Create a rule-self-improvement.md that helps keep Cursor rules updated as this project evolves.
+Create a rule-self-improvement.md that helps keep Cursor rules updated.
 
-Analyze the codebase and include:
+## REQUIRED SECTIONS:
+1. **When to Add Rules** - Triggers for new rules
+2. **When to Update** - Triggers for updating existing rules
+3. **Pattern Examples** - 2-3 real patterns from THIS codebase
+4. **Quality Checklist** - Rule quality criteria
 
-1. **Project-specific triggers** for when to add/update rules:
-   - Common patterns unique to THIS project
-   - Repeated code structures you found
-   - Error handling patterns used here
-
-2. **Pattern recognition examples** using ACTUAL code from this project:
-   - Show 2-3 real repeated patterns you found
-   - Explain which rule file they belong in
-
-3. **Quality checklist** tailored to this project's tech stack
-
-4. **Update triggers** specific to this project:
-   - Key files that when changed should trigger rule review
-   - Dependencies that affect coding patterns
-
-CONSTRAINTS:
-- Keep under 70 lines
-- Use real examples from this codebase
+## CONSTRAINTS:
+- Maximum 70 lines total
+- Use REAL examples from this codebase
 - Reference existing rule files if any
-- Use alwaysApply: true""",
+- Focus on project-specific triggers
+
+## FRONTMATTER:
+```yaml
+---
+description: Guidelines for improving Cursor rules
+globs: [".cursor/rules/*"]
+alwaysApply: true
+---
+```""",
             "output_file": ".cursor/rules/rule-self-improvement.md",
         },
     ],
@@ -361,19 +522,73 @@ CONSTRAINTS:
         {
             "name": "Custom Code Review",
             "description": "Generate a code review command tailored to your project",
-            "prompt": """@Codebase Analyze the coding standards, patterns, and common issues in this project. Create a cursor command for code review that checks for project-specific concerns, not just generic best practices.""",
+            "prompt": """@Codebase
+
+Create a review.md command for code reviews tailored to THIS project.
+
+## REQUIRED SECTIONS:
+1. **Overview** - What this review checks (1-2 sentences)
+2. **Project-Specific Checks** - Checklist based on THIS codebase patterns
+3. **Common Issues** - Problems specific to this project's tech stack
+4. **Output Format** - How to structure review feedback
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Focus on project-specific concerns, not generic best practices
+- Include checklist items from actual patterns found
+- Reference coding standards if they exist in .cursor/rules/
+
+## FORMAT:
+Plain markdown (commands don't use frontmatter)
+Title should be: # Code Review""",
             "output_file": ".cursor/commands/review.md",
         },
         {
             "name": "Project-Specific Test Generator",
             "description": "Generate a test writing command matching your test patterns",
-            "prompt": """@Codebase Analyze the testing framework, patterns, and conventions used. Create a cursor command that generates tests matching this project's exact style and structure.""",
+            "prompt": """@Codebase
+
+Create a write-tests.md command for generating tests matching THIS project's style.
+
+## REQUIRED SECTIONS:
+1. **Overview** - What this command does (1-2 sentences)
+2. **Test Structure** - How tests are organized in THIS project
+3. **Instructions** - Steps for generating tests
+4. **Example Format** - Template matching project's test style
+
+## CONSTRAINTS:
+- Maximum 50 lines total
+- Match the exact testing framework used (Jest, pytest, etc.)
+- Include file naming convention from this project
+- Reference actual test file as example if found
+
+## FORMAT:
+Plain markdown (commands don't use frontmatter)
+Title should be: # Write Tests""",
             "output_file": ".cursor/commands/write-tests.md",
         },
         {
             "name": "Feature Setup Command",
             "description": "Generate a feature scaffolding command for your project",
-            "prompt": """@Codebase Analyze the project structure and patterns for features/modules. Create a cursor command that helps set up new features following this project's conventions (files to create, boilerplate, etc.).""",
+            "prompt": """@Codebase
+
+Create a new-feature.md command for scaffolding new features in THIS project.
+
+## REQUIRED SECTIONS:
+1. **Overview** - What this command creates (1-2 sentences)
+2. **Files to Create** - List of files based on project structure
+3. **Boilerplate** - Templates matching project conventions
+4. **Checklist** - Post-creation steps
+
+## CONSTRAINTS:
+- Maximum 60 lines total
+- Base file structure on existing features/modules in project
+- Use actual naming conventions from codebase
+- Include only files relevant to this project's architecture
+
+## FORMAT:
+Plain markdown (commands don't use frontmatter)
+Title should be: # New Feature Setup""",
             "output_file": ".cursor/commands/new-feature.md",
         },
     ],

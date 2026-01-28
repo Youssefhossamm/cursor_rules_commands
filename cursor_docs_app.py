@@ -708,7 +708,12 @@ with tab_prompts:
     Simply copy a prompt and paste it into Cursor chat - the AI will analyze your codebase and generate tailored content.
     """)
     
-    st.info("💡 **Tip**: These prompts use `@Codebase` and `@.cursor/rules/...` references so Cursor AI can access your actual project files!")
+    st.warning("""
+    ⚠️ **Before using these prompts:** Most prompts reference `@.cursor/rules/cursor-rules.md` to ensure consistent rule formatting. 
+    If you haven't created this file yet, go to the **📊 Overview** tab → **Quick Start** section to download the template first!
+    """)
+    
+    st.info("💡 **Tip**: These prompts use `@Codebase` and `@.cursor/rules/cursor-rules.md` references so Cursor AI can access your project files and follow your rule formatting guidelines.")
     
     st.markdown("---")
     
