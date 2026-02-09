@@ -5,7 +5,9 @@ This module contains structured data about Cursor Rules vs Commands,
 and functions to load and process example files.
 """
 
+import io
 import os
+import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -38,7 +40,7 @@ FRONTMATTER_FIELDS = {
     "description": {
         "type": "string",
         "required": False,
-        "description": "A brief summary of what this rule does. Shown in the Cursor UI when browsing rules.",
+        "description": "A brief summary of what this rule does. Shown in the Cursor UI when browsing rules. Also used by the AI agent to decide whether to include the rule when activation is set to 'Agent Decision'.",
         "example": 'description: "Coding standards for Python files"',
     },
     "globs": {
@@ -50,9 +52,110 @@ FRONTMATTER_FIELDS = {
     "alwaysApply": {
         "type": "boolean",
         "required": False,
-        "description": "If true, this rule is always included in the AI context regardless of which files are open. Useful for project-wide guidelines.",
+        "description": "If true, this rule is always included in the AI context regardless of which files are open. Useful for project-wide guidelines. Keep these minimal to preserve context space.",
         "example": "alwaysApply: true",
     },
+}
+
+# Rule activation modes documentation
+RULE_ACTIVATION_MODES = {
+    "always": {
+        "name": "Always Active",
+        "trigger": "alwaysApply: true",
+        "description": "Rule is always included in every AI interaction. Use sparingly for essential project-wide context.",
+        "best_for": "Project structure, core conventions",
+    },
+    "glob": {
+        "name": "Auto-Attached (Glob)",
+        "trigger": "globs: [\"**/*.ts\"]",
+        "description": "Rule automatically applies when files matching the pattern are referenced or open.",
+        "best_for": "Language/framework-specific rules",
+    },
+    "manual": {
+        "name": "Manual (@mention)",
+        "trigger": "@rule-name in chat",
+        "description": "User explicitly includes the rule by typing @rule-name in Cmd-K or chat.",
+        "best_for": "Specialized rules needed occasionally",
+    },
+    "agent": {
+        "name": "Agent Decision",
+        "trigger": "description field + no globs/alwaysApply",
+        "description": "AI decides whether to include the rule based on the description and current task.",
+        "best_for": "Context-dependent guidelines",
+    },
+}
+
+# Types of rules in Cursor
+RULE_TYPES = {
+    "project": {
+        "name": "Project Rules",
+        "location": ".cursor/rules/",
+        "description": "Version-controlled rules scoped to your codebase. Shared with team via git.",
+        "icon": "📁",
+    },
+    "user": {
+        "name": "User Rules",
+        "location": "Cursor Settings > Rules for AI",
+        "description": "Global personal rules that apply to all your projects. Not version-controlled.",
+        "icon": "👤",
+    },
+    "team": {
+        "name": "Team Rules",
+        "location": "Cursor Dashboard (Team/Enterprise)",
+        "description": "Organization-wide rules managed from the Cursor dashboard. Requires Team or Enterprise plan.",
+        "icon": "👥",
+    },
+    "agents_md": {
+        "name": "AGENTS.md",
+        "location": "Project root",
+        "description": "Simple markdown file for project-wide AI guidance. Works with Cursor, GitHub Copilot, and other AI tools.",
+        "icon": "📄",
+    },
+}
+
+# Hooks documentation
+CURSOR_HOOKS = {
+    "overview": "Cursor Hooks allow you to observe, control, and extend the agent loop using custom scripts. They run before or after defined stages of the agent lifecycle.",
+    "location": ".cursor/hooks.json",
+    "available_hooks": [
+        {
+            "name": "beforeSubmitPrompt",
+            "description": "Runs when the prompt is first submitted",
+            "use_case": "Validate or modify prompts before sending",
+        },
+        {
+            "name": "beforeShellExecution",
+            "description": "Runs before any shell command executes",
+            "use_case": "Gate risky commands, add logging",
+        },
+        {
+            "name": "beforeMCPExecution",
+            "description": "Runs before MCP (Model Context Protocol) execution",
+            "use_case": "Control MCP tool access",
+        },
+        {
+            "name": "beforeReadFile",
+            "description": "Runs before a file is read",
+            "use_case": "Scan for sensitive content, access control",
+        },
+        {
+            "name": "afterFileEdit",
+            "description": "Runs after a file is edited",
+            "use_case": "Auto-format, lint, run tests",
+        },
+        {
+            "name": "stop",
+            "description": "Runs when the task is completed",
+            "use_case": "Cleanup, notifications, analytics",
+        },
+    ],
+    "example": """{
+  "hooks": {
+    "afterFileEdit": {
+      "command": "prettier --write {filePath}"
+    }
+  }
+}""",
 }
 
 # ============================================================================
@@ -1108,6 +1211,13 @@ EXTERNAL_RESOURCES = {
             "icon": "📗",
         },
         {
+            "name": "Cursor Hooks Documentation",
+            "url": "https://cursor.com/docs/agent/hooks",
+            "description": "Official guide on lifecycle hooks - run scripts before/after AI operations for formatting, validation, logging.",
+            "type": "Official",
+            "icon": "🪝",
+        },
+        {
             "name": "Cursor Quickstart Guide",
             "url": "https://docs.cursor.com/get-started/quickstart",
             "description": "Getting started with Cursor - covers basic setup and initial configuration.",
@@ -1140,6 +1250,14 @@ EXTERNAL_RESOURCES = {
             "stars": "8k+",
         },
         {
+            "name": "AGENTS.md",
+            "url": "https://agentsmd.io/",
+            "description": "Open standard for AI agent guidance. Single markdown file that works with Cursor, GitHub Copilot, and other AI tools.",
+            "type": "Community",
+            "icon": "📄",
+            "stars": "New",
+        },
+        {
             "name": "Cursor Forum",
             "url": "https://forum.cursor.com",
             "description": "Official Cursor community forum for discussions, tips, and rule sharing.",
@@ -1148,6 +1266,21 @@ EXTERNAL_RESOURCES = {
         },
     ],
 }
+
+
+def get_rule_types() -> Dict:
+    """Returns the different types of Cursor rules."""
+    return RULE_TYPES
+
+
+def get_rule_activation_modes() -> Dict:
+    """Returns rule activation modes documentation."""
+    return RULE_ACTIVATION_MODES
+
+
+def get_hooks_documentation() -> Dict:
+    """Returns Cursor hooks documentation."""
+    return CURSOR_HOOKS
 
 # Tech-specific rule examples from community best practices
 COMMUNITY_RULE_EXAMPLES = {
@@ -1394,3 +1527,419 @@ QUICK_TIPS = {
 def get_quick_tips(category: str = "general") -> List[str]:
     """Returns quick tips for the specified category."""
     return QUICK_TIPS.get(category, QUICK_TIPS["general"])
+
+
+# ============================================================================
+# STARTER KIT - ZIP DOWNLOAD CONTENT
+# ============================================================================
+
+STARTER_KIT_RULES = {
+    "cursor-rules.md": """---
+description: Guidelines for writing effective Cursor rules
+globs: 
+  - ".cursor/rules/*"
+alwaysApply: false
+---
+
+# Cursor Rules Best Practices
+
+## Rule Structure
+
+Every rule file must include:
+1. **YAML Frontmatter** - Metadata controlling when/how the rule applies
+2. **Markdown Content** - Clear, actionable instructions
+
+## Frontmatter Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `description` | string | Brief summary shown in Cursor UI |
+| `globs` | array | File patterns that trigger this rule |
+| `alwaysApply` | boolean | If true, always includes this rule |
+
+## Rule Activation Modes
+
+Rules can be triggered through:
+- **Always**: `alwaysApply: true` for persistent application
+- **Glob Patterns**: Auto-apply when matching files are referenced
+- **Manual**: Using `@rule-name` in Cmd-K or chat
+- **Agent Decision**: AI determines relevance based on description
+
+## Best Practices
+
+- Keep rules focused on a single concern
+- Use specific globs to avoid noise (e.g., `src/**/*.ts` not `**/*`)
+- Write clear, actionable instructions
+- Keep content concise (50-150 lines recommended)
+- Include examples where helpful
+- Multiple small focused rules > one giant rule
+""",
+
+    "project-structure.md": """---
+description: Project structure and architecture overview
+globs: []
+alwaysApply: true
+---
+
+# Project Structure
+
+## Overview
+
+[Brief description of what this project does - 2-3 sentences]
+
+## Directory Layout
+
+```
+project-root/
+├── src/                    # Source code
+│   ├── components/         # UI components
+│   └── utils/              # Utility functions
+├── tests/                  # Test files
+├── docs/                   # Documentation
+└── .cursor/
+    ├── rules/              # AI context rules
+    └── commands/           # Slash commands
+```
+
+## Key Technologies
+
+- [Technology 1] - Purpose
+- [Technology 2] - Purpose
+- [Technology 3] - Purpose
+
+## Running the Application
+
+```bash
+# Install dependencies
+[package manager] install
+
+# Start development server
+[command to run]
+
+# Run tests
+[test command]
+```
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VAR_NAME` | Description | Yes/No |
+""",
+
+    "coding-standards.md": """---
+description: Coding standards and conventions for this project
+globs: []
+alwaysApply: true
+---
+
+# Coding Standards
+
+## Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Variables | camelCase | `userName`, `isActive` |
+| Functions | camelCase | `getUserById`, `calculateTotal` |
+| Classes | PascalCase | `UserService`, `DataManager` |
+| Constants | SCREAMING_SNAKE | `MAX_RETRIES`, `API_URL` |
+| Files | kebab-case | `user-service.ts`, `api-utils.py` |
+
+## Code Style
+
+- Use meaningful, descriptive names
+- Keep functions small and focused (single responsibility)
+- Prefer early returns for cleaner code
+- Use optional chaining and nullish coalescing where available
+- Destructure objects/arrays for cleaner access
+
+## Error Handling
+
+- Always handle errors explicitly
+- Use try/catch for async operations
+- Log errors with context (what operation failed, relevant IDs)
+- Return meaningful error messages to users
+- Never expose internal errors to end users
+
+## Comments
+
+- Write self-documenting code first
+- Comment the "why", not the "what"
+- Keep comments up-to-date with code changes
+- Use TODO/FIXME for tracking issues
+""",
+
+    "git-conventions.md": """---
+description: Git commit and branching conventions
+globs:
+  - ".git/**"
+  - "*.md"
+alwaysApply: false
+---
+
+# Git Conventions
+
+## Commit Message Format
+
+```
+type(scope): subject
+
+body (optional)
+
+footer (optional)
+```
+
+## Commit Types
+
+| Type | Description |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation changes |
+| `style` | Code style (formatting, semicolons) |
+| `refactor` | Code refactoring (no functional change) |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance tasks |
+
+## Guidelines
+
+- Subject: imperative mood, lowercase, no period, <50 chars
+- Body: explain what and why (not how), wrap at 72 chars
+- Reference issues in footer: `Closes #123`
+
+## Branch Naming
+
+- `feature/description` - New features
+- `fix/description` - Bug fixes
+- `docs/description` - Documentation
+- `refactor/description` - Refactoring
+
+## Examples
+
+```
+feat(auth): add OAuth2 login support
+
+Implement OAuth2 authentication with Google and GitHub providers.
+Includes token refresh and secure storage.
+
+Closes #123
+```
+""",
+
+    "rule-self-improvement.md": """---
+description: Guidelines for continuously improving Cursor rules
+globs:
+  - ".cursor/rules/*"
+alwaysApply: false
+---
+
+# Rule Self-Improvement Guidelines
+
+## When to Add New Rules
+
+- A pattern is used in **3+ files** consistently
+- Common bugs could be prevented by standardization
+- Code reviews repeatedly mention the same feedback
+- New security or performance patterns emerge
+- New libraries/frameworks added to the project
+
+## When to Update Existing Rules
+
+- Better examples exist in the codebase
+- Additional edge cases are discovered
+- Implementation details have changed
+- Related rules have been updated
+- Outdated patterns need deprecation
+
+## Rule Quality Checklist
+
+- [ ] Rules are actionable and specific
+- [ ] Examples come from actual codebase
+- [ ] Patterns are consistently enforced
+- [ ] No outdated references
+- [ ] File size under 150 lines
+- [ ] Clear, concise language
+
+## Continuous Improvement
+
+- Monitor code review comments for patterns
+- Update rules after major refactors
+- Deprecate rules that no longer apply
+- Cross-reference related rules
+- Keep `alwaysApply` rules minimal
+""",
+}
+
+STARTER_KIT_COMMANDS = {
+    "code-review-checklist.md": GENERIC_COMMANDS["code-review-checklist"]["content"],
+    "write-tests.md": GENERIC_COMMANDS["write-tests"]["content"],
+    "debug.md": GENERIC_COMMANDS["debug"]["content"],
+    "explain.md": GENERIC_COMMANDS["explain"]["content"],
+    "refactor.md": GENERIC_COMMANDS["refactor"]["content"],
+    "security-audit.md": GENERIC_COMMANDS["security-audit"]["content"],
+    "commit.md": GENERIC_COMMANDS["commit"]["content"],
+    "create-pr.md": GENERIC_COMMANDS["create-pr"]["content"],
+    "document.md": GENERIC_COMMANDS["document"]["content"],
+    "optimize.md": GENERIC_COMMANDS["optimize"]["content"],
+}
+
+STARTER_KIT_AGENTS_MD = """# AGENTS.md
+
+> Project-wide AI agent guidance for Cursor, GitHub Copilot, and other AI tools.
+
+## Project Overview
+
+[Brief description of the project - what it does, who it's for]
+
+## Build & Run
+
+```bash
+# Install dependencies
+[package manager] install
+
+# Run development server
+[dev command]
+
+# Run tests
+[test command]
+
+# Build for production
+[build command]
+```
+
+## Code Conventions
+
+- **Language**: [Primary language]
+- **Framework**: [Main framework]
+- **Style Guide**: [Link or description]
+
+## Architecture Notes
+
+[Key architectural decisions and patterns used]
+
+## Important Files
+
+- `src/index.ts` - Entry point
+- `src/config.ts` - Configuration
+- [Other key files]
+
+## Testing
+
+- Test framework: [Jest/pytest/etc.]
+- Run all tests: `[command]`
+- Test location: `tests/` or `__tests__/`
+
+## Common Tasks
+
+### Adding a new feature
+1. Create feature branch: `git checkout -b feature/name`
+2. Implement in `src/`
+3. Add tests in `tests/`
+4. Submit PR
+
+### Debugging
+- Check logs in `[location]`
+- Use `[debug command]` for verbose output
+
+---
+
+*This file provides context to AI coding assistants. Keep it updated!*
+"""
+
+STARTER_KIT_README = """# Cursor Starter Kit
+
+Ready-to-use Cursor Rules and Commands for any project.
+
+## Quick Setup
+
+1. Copy the `.cursor/` folder to your project root
+2. (Optional) Copy `AGENTS.md` to your project root
+3. Customize `project-structure.md` with your project details
+4. Start using commands by typing `/` in Cursor chat!
+
+## What's Included
+
+### Rules (`.cursor/rules/`)
+
+| Rule | Purpose |
+|------|---------|
+| `cursor-rules.md` | Guidelines for writing effective rules |
+| `project-structure.md` | Project overview template (customize this!) |
+| `coding-standards.md` | Generic coding conventions |
+| `git-conventions.md` | Commit message and branch naming |
+| `rule-self-improvement.md` | Guidelines for evolving rules |
+
+### Commands (`.cursor/commands/`)
+
+| Command | Purpose |
+|---------|---------|
+| `/code-review-checklist` | Systematic code review |
+| `/write-tests` | Generate comprehensive tests |
+| `/debug` | Systematic debugging help |
+| `/explain` | Detailed code explanation |
+| `/refactor` | Refactoring suggestions |
+| `/security-audit` | Security vulnerability scan |
+| `/commit` | Generate commit messages |
+| `/create-pr` | Generate PR descriptions |
+| `/document` | Generate documentation |
+| `/optimize` | Performance optimization |
+
+### AGENTS.md
+
+A simpler alternative to `.cursor/rules/` that works with multiple AI tools.
+Place in your project root for project-wide AI guidance.
+
+## Customization
+
+1. **Edit `project-structure.md`** - Fill in your project details
+2. **Edit `coding-standards.md`** - Adjust to your team's conventions
+3. **Add tech-specific rules** - Create rules for your framework
+
+## Learn More
+
+- [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
+- [Cursor Commands Documentation](https://cursor.com/docs/context/commands)
+- [cursor.directory](https://cursor.directory) - Community rules
+
+---
+
+Generated by [Cursor Kickstart](https://github.com/Youssefhossamm/cursor_rules_commands)
+"""
+
+
+def generate_starter_kit_zip() -> bytes:
+    """
+    Generates a ZIP file containing the complete Cursor starter kit.
+    
+    Returns:
+        bytes: The ZIP file content as bytes
+    """
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # Add rules
+        for filename, content in STARTER_KIT_RULES.items():
+            zf.writestr(f"cursor-starter-kit/.cursor/rules/{filename}", content)
+        
+        # Add commands
+        for filename, content in STARTER_KIT_COMMANDS.items():
+            zf.writestr(f"cursor-starter-kit/.cursor/commands/{filename}", content)
+        
+        # Add AGENTS.md
+        zf.writestr("cursor-starter-kit/AGENTS.md", STARTER_KIT_AGENTS_MD)
+        
+        # Add README
+        zf.writestr("cursor-starter-kit/README.md", STARTER_KIT_README)
+    
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
+
+
+def get_starter_kit_contents() -> Dict[str, Dict[str, str]]:
+    """Returns the starter kit contents for display."""
+    return {
+        "rules": STARTER_KIT_RULES,
+        "commands": STARTER_KIT_COMMANDS,
+        "agents_md": STARTER_KIT_AGENTS_MD,
+        "readme": STARTER_KIT_README,
+    }

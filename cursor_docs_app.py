@@ -21,6 +21,12 @@ from cursor_docs_content import (
     get_generic_commands,
     get_external_resources,
     get_community_rule_examples,
+    generate_starter_kit_zip,
+    get_starter_kit_contents,
+    get_rule_types,
+    get_rule_activation_modes,
+    get_hooks_documentation,
+    STARTER_KIT_AGENTS_MD,
 )
 
 # ============================================================================
@@ -272,6 +278,21 @@ with st.sidebar:
     st.markdown("## 🧭 Navigation")
     st.markdown("---")
     
+    # Prominent download button in sidebar
+    st.markdown("### 📦 Quick Start")
+    zip_data_sidebar = generate_starter_kit_zip()
+    st.download_button(
+        label="⬇️ Download Starter Kit",
+        data=zip_data_sidebar,
+        file_name="cursor-starter-kit.zip",
+        mime="application/zip",
+        key="download_starter_kit_sidebar",
+        use_container_width=True,
+    )
+    st.caption("5 rules + 10 commands + AGENTS.md")
+    
+    st.markdown("---")
+    
     st.markdown("### 📖 About This App")
     st.markdown("""
     Learn the difference between **Cursor Rules** and **Cursor Commands**, 
@@ -284,6 +305,7 @@ with st.sidebar:
     st.markdown("""
     - [Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
     - [Commands Documentation](https://cursor.com/docs/context/commands)
+    - [Hooks Documentation](https://cursor.com/docs/agent/hooks)
     - [Cursor Quickstart](https://docs.cursor.com/get-started/quickstart)
     """)
     
@@ -293,6 +315,7 @@ with st.sidebar:
     st.markdown("""
     - [cursor.directory](https://cursor.directory) - Browse rules
     - [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - GitHub collection
+    - [AGENTS.md](https://agentsmd.io/) - Open standard
     """)
     
     st.markdown("---")
@@ -365,6 +388,47 @@ with tab_overview:
             </ul>
         </div>
         """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # =========================================================================
+    # RULE TYPES SECTION
+    # =========================================================================
+    
+    st.markdown("## Types of Cursor Rules")
+    st.markdown("Cursor supports multiple ways to provide AI guidance:")
+    
+    rule_types = get_rule_types()
+    cols_types = st.columns(4)
+    
+    for idx, (key, rule_type) in enumerate(rule_types.items()):
+        with cols_types[idx]:
+            card_class = "rule-card" if key != "agents_md" else "info-card"
+            st.markdown(f"""
+            <div class="{card_class}" style="min-height: 180px;">
+                <h4 style="margin-top: 0;">{rule_type['icon']} {rule_type['name']}</h4>
+                <p style="font-size: 0.85rem;"><code>{rule_type['location']}</code></p>
+                <p style="font-size: 0.85rem; color: #6b7280;">{rule_type['description']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # =========================================================================
+    # RULE ACTIVATION MODES
+    # =========================================================================
+    
+    st.markdown("## Rule Activation Modes")
+    st.markdown("Rules can be triggered in 4 different ways:")
+    
+    activation_modes = get_rule_activation_modes()
+    
+    for mode_key, mode in activation_modes.items():
+        with st.expander(f"**{mode['name']}** — `{mode['trigger']}`", expanded=False):
+            st.markdown(f"**How it works:** {mode['description']}")
+            st.markdown(f"**Best for:** {mode['best_for']}")
+    
+    st.info("💡 **Tip:** Use `@rule-name` in chat to manually include any rule. This works even for rules without `alwaysApply` or matching globs!")
     
     st.markdown("---")
     
@@ -465,9 +529,85 @@ with tab_overview:
     st.markdown("## 🚀 Quick Start: Set Up Your Project")
     st.markdown("""
     <div class="info-card">
-        <p style="margin-bottom: 1rem;"><strong>New to Cursor Rules & Commands?</strong> Follow these 4 steps to supercharge your AI-assisted coding!</p>
+        <p style="margin-bottom: 1rem;"><strong>New to Cursor Rules & Commands?</strong> Get started instantly with our Starter Kit or follow the step-by-step guide below!</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # =========================================================================
+    # STARTER KIT DOWNLOAD - Prominent Section
+    # =========================================================================
+    
+    st.markdown("### 📦 One-Click Starter Kit")
+    st.markdown("""
+    Get everything you need to supercharge your AI-assisted coding in one download.
+    """)
+    
+    col_kit1, col_kit2 = st.columns([2, 1])
+    
+    with col_kit1:
+        st.markdown("""
+        <div class="rule-card">
+            <h4 style="margin-top: 0;">✨ What's Included:</h4>
+            <ul style="margin-bottom: 0;">
+                <li><strong>5 Essential Rules</strong> - Project structure, coding standards, git conventions & more</li>
+                <li><strong>10 Ready-to-Use Commands</strong> - Code review, tests, debug, refactor, security audit...</li>
+                <li><strong>AGENTS.md Template</strong> - Simpler alternative for AI guidance</li>
+                <li><strong>Setup Instructions</strong> - Get running in seconds</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_kit2:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <p style="font-size: 2.5rem; margin-bottom: 0.5rem;">📥</p>
+            <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">Works with any project</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Generate and offer ZIP download
+        zip_data = generate_starter_kit_zip()
+        st.download_button(
+            label="⬇️ Download Starter Kit",
+            data=zip_data,
+            file_name="cursor-starter-kit.zip",
+            mime="application/zip",
+            key="download_starter_kit_main",
+            use_container_width=True,
+        )
+    
+    st.markdown("""
+    **Quick Setup:**
+    1. Download and extract the ZIP
+    2. Copy the `.cursor/` folder to your project root
+    3. Customize `project-structure.md` with your project details
+    4. Start using `/commands` in Cursor chat!
+    """)
+    
+    # Setup scripts
+    with st.expander("🖥️ **One-Line Setup Scripts** (Alternative)", expanded=False):
+        st.markdown("If you prefer command-line setup, use these scripts after downloading:")
+        
+        st.markdown("**PowerShell (Windows):**")
+        ps_script = """# Run in your project directory after downloading cursor-starter-kit.zip
+Expand-Archive cursor-starter-kit.zip -DestinationPath . -Force
+Move-Item cursor-starter-kit\\.cursor . -Force
+Move-Item cursor-starter-kit\\AGENTS.md . -Force
+Remove-Item cursor-starter-kit -Recurse -Force
+Remove-Item cursor-starter-kit.zip -Force"""
+        st.code(ps_script, language="powershell")
+        
+        st.markdown("**Bash (macOS/Linux):**")
+        bash_script = """# Run in your project directory after downloading cursor-starter-kit.zip
+unzip cursor-starter-kit.zip
+mv cursor-starter-kit/.cursor .
+mv cursor-starter-kit/AGENTS.md .
+rm -rf cursor-starter-kit cursor-starter-kit.zip"""
+        st.code(bash_script, language="bash")
+    
+    st.markdown("---")
+    
+    st.markdown("### 🛠️ Manual Setup (Step-by-Step)")
     
     # Step 1: Create directory structure
     st.markdown("### Step 1: Create the `.cursor/` Directory Structure")
@@ -946,17 +1086,32 @@ with tab_commands:
     
     # Bulk download section
     st.markdown("### 📦 Download All Commands")
-    st.markdown("Get all generic commands as a zip file to quickly set up your project.")
     
-    # Create combined content for bulk info
-    st.markdown("**Commands included:**")
-    cmd_list = ", ".join([f"`/{k}`" for k in generic_commands.keys()])
-    st.markdown(cmd_list)
+    col_bulk1, col_bulk2 = st.columns([2, 1])
+    
+    with col_bulk1:
+        st.markdown("Get all commands in one download with the **Starter Kit**:")
+        st.markdown("**Commands included:**")
+        cmd_list = ", ".join([f"`/{k}`" for k in generic_commands.keys()])
+        st.markdown(cmd_list)
+    
+    with col_bulk2:
+        # Generate and offer ZIP download
+        zip_data = generate_starter_kit_zip()
+        st.download_button(
+            label="⬇️ Download Complete Starter Kit",
+            data=zip_data,
+            file_name="cursor-starter-kit.zip",
+            mime="application/zip",
+            key="download_starter_kit_commands",
+            use_container_width=True,
+        )
+        st.caption("Includes all commands + rules")
     
     st.markdown("""
     **Setup instructions:**
-    1. Create `.cursor/commands/` directory in your project
-    2. Download individual commands above or copy the content
+    1. Download the Starter Kit ZIP above
+    2. Extract and copy `.cursor/` folder to your project
     3. Commands are immediately available when you type `/` in chat
     """)
 
@@ -971,6 +1126,25 @@ with tab_resources:
     Curated collection of **official documentation** and **community resources** 
     to help you master Cursor Rules and Commands.
     """)
+    
+    # Quick download reminder
+    col_res_dl1, col_res_dl2 = st.columns([3, 1])
+    with col_res_dl1:
+        st.markdown("""
+        <div class="info-card">
+            <strong>🚀 Quick Start:</strong> Download the complete Starter Kit with all rules, commands, and AGENTS.md template.
+        </div>
+        """, unsafe_allow_html=True)
+    with col_res_dl2:
+        zip_data = generate_starter_kit_zip()
+        st.download_button(
+            label="⬇️ Starter Kit",
+            data=zip_data,
+            file_name="cursor-starter-kit.zip",
+            mime="application/zip",
+            key="download_starter_kit_resources",
+            use_container_width=True,
+        )
     
     st.markdown("---")
     
@@ -1066,10 +1240,53 @@ with tab_resources:
     
     st.markdown("---")
     
+    # =========================================================================
+    # AGENTS.MD SECTION
+    # =========================================================================
+    
+    st.markdown("### 📄 AGENTS.md - Simple Alternative")
+    st.markdown("""
+    **AGENTS.md** is an open standard for AI agent guidance that works with multiple tools including Cursor, GitHub Copilot, and others.
+    It's a single markdown file placed in your project root — simpler than managing multiple rule files.
+    """)
+    
+    col_agents1, col_agents2 = st.columns([2, 1])
+    
+    with col_agents1:
+        st.markdown("""
+        <div class="info-card">
+            <h4 style="margin-top: 0;">When to Use AGENTS.md</h4>
+            <ul>
+                <li>You want one file instead of multiple rules</li>
+                <li>You use multiple AI tools (Cursor + Copilot)</li>
+                <li>Your team prefers simpler documentation</li>
+                <li>You're starting a new project and want quick setup</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_agents2:
+        st.download_button(
+            label="⬇️ Download AGENTS.md Template",
+            data=STARTER_KIT_AGENTS_MD,
+            file_name="AGENTS.md",
+            mime="text/markdown",
+            key="download_agents_md_resources",
+            use_container_width=True,
+        )
+        st.caption("Place in your project root")
+    
+    with st.expander("📄 Preview AGENTS.md Template", expanded=False):
+        st.code(STARTER_KIT_AGENTS_MD, language="markdown")
+    
+    st.markdown("---")
+    
     # Advanced Topics section
     st.markdown("### 🔧 Advanced Topics")
     
     col_adv1, col_adv2 = st.columns(2)
+    
+    hooks_docs = get_hooks_documentation()
     
     with col_adv1:
         st.markdown("""
@@ -1078,15 +1295,13 @@ with tab_resources:
             <p>
                 Run scripts <em>before</em> or <em>after</em> AI operations.
             </p>
-            <p><strong>Use cases:</strong></p>
+            <p><strong>Available Hooks:</strong></p>
             <ul>
-                <li>Auto-format AI-generated code</li>
-                <li>Run linters before committing</li>
-                <li>Log AI interactions</li>
+                <li><code>beforeSubmitPrompt</code> - Validate prompts</li>
+                <li><code>beforeShellExecution</code> - Gate risky commands</li>
+                <li><code>afterFileEdit</code> - Auto-format code</li>
+                <li><code>stop</code> - Cleanup when done</li>
             </ul>
-            <p style="font-size: 0.85rem; color: #6b7280;">
-                <em>💡 Start with Rules & Commands first.</em>
-            </p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1108,6 +1323,16 @@ with tab_resources:
             </p>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Hooks configuration example
+    with st.expander("📄 **Hooks Configuration Example** (`.cursor/hooks.json`)", expanded=False):
+        st.markdown(f"**Location:** `{hooks_docs['location']}`")
+        st.markdown(hooks_docs['overview'])
+        st.code(hooks_docs['example'], language="json")
+        st.markdown("**All Available Hooks:**")
+        for hook in hooks_docs['available_hooks']:
+            st.markdown(f"- **`{hook['name']}`** - {hook['description']}")
+        st.markdown("[📘 View Official Hooks Documentation](https://cursor.com/docs/agent/hooks)")
     
     # Rule Self-Improvement template download
     with st.expander("📄 **Download Rule Self-Improvement Template**", expanded=False):

@@ -4,11 +4,43 @@ A Streamlit app that helps developers **master Cursor Rules & Commands** — fro
 
 ## ✨ Features
 
+- **📦 One-Click Starter Kit** — Download a complete set of rules and commands for any project
 - **📊 Learn the Difference** — Clear explanations of Cursor Commands vs Rules with side-by-side comparisons
 - **✨ AI Generation Prompts** — Ready-to-use prompts to generate project-specific rules using Cursor's built-in AI
-- **⚡ Ready-to-Use Commands** — Generic slash commands that work with any project
+- **⚡ Ready-to-Use Commands** — 10 generic slash commands that work with any project
+- **📄 AGENTS.md Support** — Template for the simpler alternative that works with multiple AI tools
 - **🔗 Verified Resources** — Links to official Cursor documentation and curated community resources
 - **📁 Live Examples** — Real example files from this project's `.cursor/` directory
+
+## 📦 Starter Kit Contents
+
+The downloadable starter kit includes:
+
+### Rules (5 files)
+| Rule | Purpose |
+|------|---------|
+| `cursor-rules.md` | Meta rule - guidelines for writing rules |
+| `project-structure.md` | Project overview template (customize this!) |
+| `coding-standards.md` | Generic coding conventions |
+| `git-conventions.md` | Commit message and branch naming |
+| `rule-self-improvement.md` | Guidelines for evolving rules |
+
+### Commands (10 files)
+| Command | Purpose |
+|---------|---------|
+| `/code-review-checklist` | Systematic code review |
+| `/write-tests` | Generate comprehensive tests |
+| `/debug` | Systematic debugging help |
+| `/explain` | Detailed code explanation |
+| `/refactor` | Refactoring suggestions |
+| `/security-audit` | Security vulnerability scan |
+| `/commit` | Generate commit messages |
+| `/create-pr` | Generate PR descriptions |
+| `/document` | Generate documentation |
+| `/optimize` | Performance optimization |
+
+### Bonus
+- **AGENTS.md** — Simple alternative for project-wide AI guidance
 
 ## 🚀 Quick Start
 
@@ -50,7 +82,7 @@ A Streamlit app that helps developers **master Cursor Rules & Commands** — fro
 ```
 cursor_rules_commands/
 ├── cursor_docs_app.py        # Main Streamlit entry point (5 tabs)
-├── cursor_docs_content.py    # Content definitions, resources, examples
+├── cursor_docs_content.py    # Content definitions, starter kit, resources
 ├── requirements.txt          # Python dependencies (streamlit, pyyaml)
 ├── .gitignore               # Git ignore patterns
 │
@@ -63,12 +95,20 @@ cursor_rules_commands/
     │   ├── run-app.md                     # /run-app - Start app in venv
     │   ├── stop-app.md                    # /stop-app - Stop running app
     │   └── sync-docs.md                   # /sync-docs - Sync README & rules
-    ├── plans/                              # Cursor plan files
     └── rules/
         ├── cursor-rules.md                # Meta rule about writing rules
         ├── project-structure.md           # Project architecture (alwaysApply)
         └── rule-self-improvement.md       # Meta rule for evolving rules
 ```
+
+## 📚 New Cursor Features Covered
+
+This app covers the latest Cursor documentation including:
+
+- **Rule Types** — Project Rules, User Rules, Team Rules, AGENTS.md
+- **Activation Modes** — Always, Glob patterns, Manual (`@rule-name`), Agent Decision
+- **Hooks System** — 6 lifecycle hooks for extending AI operations
+- **Best Practices** — Rule organization, file size guidelines, numbered files
 
 ## 🛠️ Tech Stack
 
@@ -90,10 +130,13 @@ Background context that Cursor's AI always considers when working with your code
 ### Official Documentation
 - [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
 - [Cursor Commands Documentation](https://cursor.com/docs/context/commands)
+- [Cursor Hooks Documentation](https://cursor.com/docs/agent/hooks)
+- [Cursor Quickstart Guide](https://docs.cursor.com/get-started/quickstart)
 
 ### Community
 - [cursor.directory](https://cursor.directory) - Browse community rules
 - [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - GitHub collection (8k+ stars)
+- [AGENTS.md](https://agentsmd.io/) - Open standard for AI agent guidance
 
 ## 🤝 Contributing
 
