@@ -8,63 +8,67 @@ alwaysApply: true
 
 ## Overview
 
-A Streamlit app that helps developers master Cursor Rules & Commands. It:
-- Explains the differences between Cursor Commands and Rules
-- Provides AI-powered prompts to generate project-specific rules
-- Includes ready-to-use generic commands for any project
-- Links to verified official and community resources
-- Offers an interactive project-structure.md generator
+A Streamlit app that helps developers master Cursor Rules & Commands — from zero to productive in minutes. Deployed on **Streamlit Cloud** at [cursor-kickstart.streamlit.app](https://cursor-kickstart.streamlit.app/). Features a customizable starter kit, interactive rule builder, rule validator, AI generation prompts, live examples, and curated resources.
+
+## Deployment
+
+- **Production**: Streamlit Cloud — auto-deploys from `master` branch
+- **URL**: https://cursor-kickstart.streamlit.app/
+- **Constraints**: No local file paths, all dependencies must be in `requirements.txt`, no secrets needed
 
 ## Directory Layout
 
 ```
 cursor_rules_commands/
-├── cursor_docs_app.py        # Main Streamlit entry point (5 tabs)
-├── cursor_docs_content.py    # Content definitions, resources, examples
-├── requirements.txt          # Python dependencies (streamlit, pyyaml)
-├── .gitignore               # Git ignore patterns
-├── venv/                     # Python virtual environment
+├── cursor_docs_app.py        # UI: layout, CSS, sidebar, 5 tabs (~1660 lines)
+├── cursor_docs_content.py    # Data: all content, templates, ZIP gen (~2175 lines)
+├── requirements.txt          # Dependencies (streamlit, pyyaml)
+├── README.md                 # Project documentation
+├── LICENSE                   # MIT License
+├── .gitignore               # Ignores venv/, .cursor/plans/, __pycache__/
+│
+├── .streamlit/
+│   └── config.toml           # Streamlit theme (light, #4a7c94 primary)
+│
+├── .devcontainer/
+│   └── devcontainer.json     # GitHub Codespaces config (Python 3.11)
 │
 └── .cursor/
-    ├── commands/                           # Example slash commands
-    │   ├── code-review-checklist.md       # /code-review-checklist
-    │   ├── write-tests.md                 # /write-tests
-    │   ├── debug.md                       # /debug
-    │   ├── explain.md                     # /explain
-    │   ├── run-app.md                     # /run-app - Start app in venv
-    │   ├── stop-app.md                    # /stop-app - Stop running app
-    │   └── sync-docs.md                   # /sync-docs - Sync README & rules
-    ├── plans/
-    │   └── *.plan.md                      # Cursor plan files
-    └── rules/
-        ├── cursor-rules.md                # Meta rule about writing rules
-        ├── project-structure.md           # This file (alwaysApply)
-        └── rule-self-improvement.md       # Meta rule for evolving rules
+    ├── commands/              # Slash commands (7 files)
+    ├── plans/                 # Cursor plan files (gitignored)
+    └── rules/                 # AI context rules (3 files)
 ```
 
-## Architecture
+## Architecture & Key Patterns
 
-- **UI Layer**: Streamlit with 5-tab interface
-- **Logic Layer**: Content module with definitions, resources, and examples
-- **Data Sources**: Live `.cursor/` directory files
+- **Two-file architecture**: `cursor_docs_app.py` owns UI/layout, `cursor_docs_content.py` owns all data/logic. New content goes in content module, new UI goes in app module.
+- **Data-as-code**: All content stored in Python dicts/constants — no external DB or files
+- **Custom HTML cards**: Three CSS classes (`.rule-card`, `.command-card`, `.info-card`) rendered via `st.markdown(html, unsafe_allow_html=True)`
+- **Customizable Starter Kit**: ZIP generation supports full or user-selected subsets of rules/commands
+- **Interactive Build Tools**: Rule Builder (form-based wizard) and Rule Validator (frontmatter checker, token estimator) in the Build tab
+- **5-tab interface**: Overview, Live Examples, Build, Commands, Resources
+- **YAML frontmatter parsing**: Custom parser in content module for live rule examples
+
+## Streamlit Conventions
+
+- `st.set_page_config()` must be the first Streamlit call in `cursor_docs_app.py`
+- Custom CSS injected in a single `st.markdown()` block after page config
+- Uses `wide` layout, `expanded` sidebar
+- Session state used for tech rule selector and rule builder fields
 
 ## Key Technologies
 
-- **Streamlit** - Web UI framework
-- **PyYAML** - YAML frontmatter parsing
+- **Streamlit** - Web UI framework (deployed on Streamlit Cloud)
+- **PyYAML** - YAML frontmatter parsing for live examples
 
-## Running the Application
+## Running Locally
 
 ```bash
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+# Create and activate virtual environment
+python -m venv venv
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the app
 streamlit run cursor_docs_app.py
 ```

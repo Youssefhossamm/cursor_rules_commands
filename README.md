@@ -2,11 +2,15 @@
 
 A Streamlit app that helps developers **master Cursor Rules & Commands** — from zero to productive in minutes.
 
+**🌐 Live App:** [cursor-kickstart.streamlit.app](https://cursor-kickstart.streamlit.app/)
+
 ## ✨ Features
 
-- **📦 One-Click Starter Kit** — Download a complete set of rules and commands for any project
+- **📦 Customizable Starter Kit** — Download a tailored set of rules and commands — pick only what you need
+- **🏗️ Interactive Rule Builder** — Build Cursor rules step by step with live preview and instant download
+- **✅ Rule Validator** — Paste any rule to check for common issues, get token estimates, and improvement tips
 - **📊 Learn the Difference** — Clear explanations of Cursor Commands vs Rules with side-by-side comparisons
-- **✨ AI Generation Prompts** — Ready-to-use prompts to generate project-specific rules using Cursor's built-in AI
+- **🤖 AI Generation Prompts** — Ready-to-use prompts to generate project-specific rules using Cursor's built-in AI
 - **⚡ Ready-to-Use Commands** — 10 generic slash commands that work with any project
 - **📄 AGENTS.md Support** — Template for the simpler alternative that works with multiple AI tools
 - **🔗 Verified Resources** — Links to official Cursor documentation and curated community resources
@@ -81,20 +85,22 @@ The downloadable starter kit includes:
 
 ```
 cursor_rules_commands/
-├── cursor_docs_app.py        # Main Streamlit entry point (5 tabs)
-├── cursor_docs_content.py    # Content definitions, starter kit, resources
-├── requirements.txt          # Python dependencies (streamlit, pyyaml)
+├── cursor_docs_app.py        # UI: layout, CSS, sidebar, 5 tabs
+├── cursor_docs_content.py    # Data: all content, templates, ZIP generation
+├── requirements.txt          # Dependencies (streamlit, pyyaml)
+├── README.md                 # Project documentation
+├── LICENSE                   # MIT License
 ├── .gitignore               # Git ignore patterns
 │
+├── .streamlit/
+│   └── config.toml           # Streamlit theme configuration
+│
+├── .devcontainer/
+│   └── devcontainer.json     # GitHub Codespaces config (Python 3.11)
+│
 └── .cursor/
-    ├── commands/                           # Example slash commands
-    │   ├── code-review-checklist.md       # /code-review-checklist
-    │   ├── write-tests.md                 # /write-tests
-    │   ├── debug.md                       # /debug
-    │   ├── explain.md                     # /explain
-    │   ├── run-app.md                     # /run-app - Start app in venv
-    │   ├── stop-app.md                    # /stop-app - Stop running app
-    │   └── sync-docs.md                   # /sync-docs - Sync README & rules
+    ├── commands/              # Example slash commands (7 files)
+    ├── plans/                 # Cursor plan files (gitignored)
     └── rules/
         ├── cursor-rules.md                # Meta rule about writing rules
         ├── project-structure.md           # Project architecture (alwaysApply)
@@ -110,11 +116,21 @@ This app covers the latest Cursor documentation including:
 - **Hooks System** — 6 lifecycle hooks for extending AI operations
 - **Best Practices** — Rule organization, file size guidelines, numbered files
 
+## 🛠️ Build Tools
+
+The **Build** tab includes interactive tools:
+
+| Tool | Description |
+|------|-------------|
+| **Rule Builder** | Step-by-step wizard with activation mode picker, 18 glob presets, live preview |
+| **Rule Validator** | Paste any rule to check frontmatter, detect conflicts, estimate tokens |
+| **AI Prompts** | Copy-paste prompts for generating project-specific rules in Cursor |
+
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| **Streamlit** | Web UI framework |
+| **Streamlit** | Web UI framework (deployed on Streamlit Cloud) |
 | **PyYAML** | YAML frontmatter parsing |
 
 ## 📖 What are Cursor Commands & Rules?

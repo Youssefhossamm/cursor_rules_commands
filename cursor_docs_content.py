@@ -158,6 +158,28 @@ CURSOR_HOOKS = {
 }""",
 }
 
+# Common glob pattern presets for the interactive rule builder
+COMMON_GLOB_PRESETS = {
+    "Python": ["**/*.py"],
+    "JavaScript": ["**/*.js", "**/*.jsx"],
+    "TypeScript": ["**/*.ts", "**/*.tsx"],
+    "React": ["**/*.tsx", "**/*.jsx", "src/components/**/*"],
+    "Next.js": ["**/*.tsx", "**/*.ts", "app/**/*"],
+    "Vue": ["**/*.vue", "**/*.ts"],
+    "Go": ["**/*.go"],
+    "Rust": ["**/*.rs"],
+    "Java": ["**/*.java"],
+    "C#": ["**/*.cs"],
+    "Ruby": ["**/*.rb"],
+    "PHP": ["**/*.php"],
+    "Swift": ["**/*.swift"],
+    "Kotlin": ["**/*.kt"],
+    "Markdown": ["**/*.md"],
+    "CSS/SCSS": ["**/*.css", "**/*.scss"],
+    "HTML": ["**/*.html"],
+    "Config Files": ["**/*.json", "**/*.yaml", "**/*.yml", "**/*.toml"],
+}
+
 # ============================================================================
 # COMPARISON UTILITIES
 # ============================================================================
@@ -378,6 +400,168 @@ def generate_template_based_structure(
         run_instructions="```bash\n# Add your run instructions here\n```",
         env_vars="- Add your environment variables here",
     )
+
+
+# ============================================================================
+# RULE BUILDER & VALIDATOR
+# ============================================================================
+
+def build_rule_content(
+    description: str,
+    globs: List[str],
+    always_apply: bool,
+    title: str,
+    body: str,
+) -> str:
+    """Builds a complete Cursor rule .md file from structured inputs."""
+    lines = ["---"]
+    lines.append(f"description: {description}" if description else "description: ")
+
+    if globs:
+        lines.append("globs:")
+        for g in globs:
+            lines.append(f'  - "{g}"')
+    else:
+        lines.append("globs: []")
+
+    lines.append(f"alwaysApply: {'true' if always_apply else 'false'}")
+    lines.append("---")
+    lines.append("")
+    lines.append(f"# {title}" if title else "# Untitled Rule")
+    lines.append("")
+    lines.append(body if body else "")
+
+    return "\n".join(lines)
+
+
+def validate_rule(content: str) -> List[Dict]:
+    """
+    Validates a Cursor rule file and returns a list of findings.
+
+    Each finding: {"level": "pass"|"warning"|"error"|"info", "message": str, "detail": str}
+    """
+    results = []
+
+    stripped = content.strip()
+    if not stripped:
+        results.append({"level": "error", "message": "Empty content", "detail": "The rule file is empty."})
+        return results
+
+    # Check frontmatter delimiters
+    if not stripped.startswith("---"):
+        results.append({
+            "level": "error",
+            "message": "Missing frontmatter",
+            "detail": "Rule files must start with `---` YAML frontmatter delimiters.",
+        })
+        return results
+
+    # Parse frontmatter
+    frontmatter, body = parse_frontmatter(content)
+
+    if frontmatter is None:
+        results.append({
+            "level": "error",
+            "message": "Invalid YAML frontmatter",
+            "detail": "Could not parse the YAML between `---` delimiters. Check for syntax errors.",
+        })
+        return results
+
+    # --- Field checks ---
+
+    # description
+    if frontmatter.get("description"):
+        desc = frontmatter["description"]
+        results.append({"level": "pass", "message": "Description present", "detail": f'"{desc}"'})
+        if len(str(desc)) > 200:
+            results.append({"level": "warning", "message": "Description is very long", "detail": "Keep descriptions concise for the Cursor UI."})
+    else:
+        results.append({
+            "level": "warning",
+            "message": "Missing description",
+            "detail": "Without a description, the rule won't work with Agent Decision mode and won't show context in the Cursor UI.",
+        })
+
+    # globs
+    has_globs = bool(frontmatter.get("globs"))
+    always_apply = bool(frontmatter.get("alwaysApply"))
+
+    if has_globs:
+        globs = frontmatter["globs"]
+        results.append({"level": "pass", "message": f"Glob patterns defined ({len(globs)})", "detail": ", ".join(str(g) for g in globs)})
+
+    if always_apply:
+        if has_globs:
+            results.append({
+                "level": "warning",
+                "message": "alwaysApply + globs both set",
+                "detail": "Globs are redundant when alwaysApply is true — the rule is always loaded regardless.",
+            })
+        else:
+            results.append({"level": "pass", "message": "alwaysApply is true", "detail": "This rule will always be included in AI context."})
+
+    if not has_globs and not always_apply:
+        if frontmatter.get("description"):
+            results.append({
+                "level": "info",
+                "message": "Agent Decision mode",
+                "detail": "No globs or alwaysApply. The AI will decide whether to include this rule based on the description.",
+            })
+        else:
+            results.append({
+                "level": "warning",
+                "message": "Rule may never activate",
+                "detail": "No globs, no alwaysApply, and no description. This rule can only be included via @mention.",
+            })
+
+    # Unknown frontmatter fields
+    known_fields = {"description", "globs", "alwaysApply"}
+    unknown = set(frontmatter.keys()) - known_fields
+    if unknown:
+        results.append({
+            "level": "warning",
+            "message": f"Unknown frontmatter fields: {', '.join(unknown)}",
+            "detail": "Cursor only recognizes: description, globs, alwaysApply.",
+        })
+
+    # --- Size checks ---
+    lines = stripped.split("\n")
+    total_lines = len(lines)
+
+    if not body or not body.strip():
+        results.append({"level": "warning", "message": "Empty rule body", "detail": "The rule has frontmatter but no content. Add actionable guidelines."})
+    elif total_lines > 150:
+        results.append({
+            "level": "warning",
+            "message": f"File is long ({total_lines} lines)",
+            "detail": "Recommended: 50–150 lines. Consider splitting into multiple focused rules.",
+        })
+    elif total_lines >= 50:
+        results.append({"level": "pass", "message": f"Good length ({total_lines} lines)", "detail": "Within the recommended 50–150 line range."})
+    else:
+        results.append({"level": "pass", "message": f"Concise ({total_lines} lines)", "detail": "Short and focused — good for alwaysApply rules."})
+
+    if always_apply and total_lines > 100:
+        results.append({
+            "level": "warning",
+            "message": "Long alwaysApply rule",
+            "detail": "alwaysApply rules always consume context. Try to keep them under 100 lines.",
+        })
+
+    # Heading check
+    if body and not body.strip().startswith("#"):
+        results.append({"level": "info", "message": "No markdown heading", "detail": "Consider starting the body with a # heading for readability."})
+
+    # Token estimate (~1 token per 4 chars for English text)
+    char_count = len(content)
+    estimated_tokens = char_count // 4
+    results.append({
+        "level": "info",
+        "message": f"Estimated size: ~{estimated_tokens} tokens",
+        "detail": f"{char_count} chars, {total_lines} lines. Budget: ~2,000–3,000 tokens across all active rules.",
+    })
+
+    return results
 
 
 # ============================================================================
@@ -1931,6 +2115,52 @@ def generate_starter_kit_zip() -> bytes:
         # Add README
         zf.writestr("cursor-starter-kit/README.md", STARTER_KIT_README)
     
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
+
+
+def get_starter_kit_options() -> Dict[str, Dict[str, str]]:
+    """Returns starter kit items organized for the customizer UI."""
+    rule_descriptions = {
+        "cursor-rules.md": "Meta rule — guidelines for writing rules",
+        "project-structure.md": "Project overview template (customize this!)",
+        "coding-standards.md": "Generic coding conventions",
+        "git-conventions.md": "Commit message and branch naming",
+        "rule-self-improvement.md": "Guidelines for evolving rules",
+    }
+    command_descriptions = {}
+    for name in STARTER_KIT_COMMANDS:
+        cmd_key = name.replace(".md", "")
+        command_descriptions[name] = GENERIC_COMMANDS.get(cmd_key, {}).get("description", "")
+
+    return {
+        "rules": {name: rule_descriptions.get(name, "") for name in STARTER_KIT_RULES},
+        "commands": command_descriptions,
+    }
+
+
+def generate_custom_starter_kit_zip(
+    selected_rules: List[str],
+    selected_commands: List[str],
+    include_agents_md: bool = True,
+) -> bytes:
+    """Generates a ZIP file containing only the selected starter kit items."""
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for filename in selected_rules:
+            if filename in STARTER_KIT_RULES:
+                zf.writestr(f"cursor-starter-kit/.cursor/rules/{filename}", STARTER_KIT_RULES[filename])
+
+        for filename in selected_commands:
+            if filename in STARTER_KIT_COMMANDS:
+                zf.writestr(f"cursor-starter-kit/.cursor/commands/{filename}", STARTER_KIT_COMMANDS[filename])
+
+        if include_agents_md:
+            zf.writestr("cursor-starter-kit/AGENTS.md", STARTER_KIT_AGENTS_MD)
+
+        zf.writestr("cursor-starter-kit/README.md", STARTER_KIT_README)
+
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
 

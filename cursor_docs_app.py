@@ -12,6 +12,7 @@ import streamlit as st
 # Import our modules
 from cursor_docs_content import (
     FRONTMATTER_FIELDS,
+    COMMON_GLOB_PRESETS,
     get_comparison_table,
     load_example_files,
     parse_frontmatter,
@@ -22,10 +23,14 @@ from cursor_docs_content import (
     get_external_resources,
     get_community_rule_examples,
     generate_starter_kit_zip,
+    generate_custom_starter_kit_zip,
     get_starter_kit_contents,
+    get_starter_kit_options,
     get_rule_types,
     get_rule_activation_modes,
     get_hooks_documentation,
+    build_rule_content,
+    validate_rule,
     STARTER_KIT_AGENTS_MD,
 )
 
@@ -346,10 +351,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Tab names for navigation
-TAB_NAMES = ["📊 Overview", "📁 Live Examples", "✨ AI Prompts", "⚡ Commands", "🔗 Resources"]
+TAB_NAMES = ["📊 Overview", "📁 Live Examples", "🛠️ Build", "⚡ Commands", "🔗 Resources"]
 
 # Create tabs
-tab_overview, tab_examples, tab_prompts, tab_commands, tab_resources = st.tabs(TAB_NAMES)
+tab_overview, tab_examples, tab_build, tab_commands, tab_resources = st.tabs(TAB_NAMES)
 
 # ============================================================================
 # TAB 1: OVERVIEW
@@ -583,6 +588,45 @@ with tab_overview:
     3. Customize `project-structure.md` with your project details
     4. Start using `/commands` in Cursor chat!
     """)
+    
+    # Customizable kit
+    with st.expander("🎨 **Customize Your Kit** — pick only what you need", expanded=False):
+        kit_options = get_starter_kit_options()
+        
+        col_rules_pick, col_cmds_pick = st.columns(2)
+        
+        selected_rules: list[str] = []
+        selected_commands: list[str] = []
+        
+        with col_rules_pick:
+            st.markdown("**📋 Rules**")
+            for name, desc in kit_options["rules"].items():
+                if st.checkbox(f"{name}", value=True, key=f"kit_r_{name}", help=desc):
+                    selected_rules.append(name)
+        
+        with col_cmds_pick:
+            st.markdown("**⚡ Commands**")
+            for name, desc in kit_options["commands"].items():
+                cmd_label = f"/{name.replace('.md', '')}"
+                if st.checkbox(cmd_label, value=True, key=f"kit_c_{name}", help=desc):
+                    selected_commands.append(name)
+        
+        include_agents = st.checkbox("📄 Include AGENTS.md", value=True, key="kit_agents")
+        
+        item_count = len(selected_rules) + len(selected_commands) + (1 if include_agents else 0)
+        
+        if item_count > 0:
+            custom_zip = generate_custom_starter_kit_zip(selected_rules, selected_commands, include_agents)
+            st.download_button(
+                label=f"⬇️ Download Custom Kit ({len(selected_rules)} rules, {len(selected_commands)} commands)",
+                data=custom_zip,
+                file_name="cursor-starter-kit.zip",
+                mime="application/zip",
+                key="download_custom_kit",
+                use_container_width=True,
+            )
+        else:
+            st.warning("Select at least one item to download.")
     
     # Setup scripts
     with st.expander("🖥️ **One-Line Setup Scripts** (Alternative)", expanded=False):
@@ -841,11 +885,155 @@ with tab_examples:
 # TAB 3: AI PROMPTS FOR SELF-GENERATION
 # ============================================================================
 
-with tab_prompts:
+with tab_build:
+    st.markdown("## 🛠️ Build Tools & AI Prompts")
+    st.markdown("""
+    Build rules interactively, validate existing ones, or use AI prompts to generate rules tailored to your project.
+    """)
+    
+    # =================================================================
+    # INTERACTIVE RULE BUILDER
+    # =================================================================
+    
+    st.markdown("### 🏗️ Interactive Rule Builder")
+    st.markdown("Build a Cursor rule step by step — preview and download instantly.")
+    
+    col_rb1, col_rb2 = st.columns(2)
+    
+    with col_rb1:
+        rb_title = st.text_input(
+            "Rule Title",
+            placeholder="e.g., Coding Standards",
+            key="rb_title",
+        )
+    with col_rb2:
+        rb_description = st.text_input(
+            "Description (shown in Cursor UI)",
+            placeholder="e.g., Python coding conventions for this project",
+            key="rb_desc",
+        )
+    
+    rb_mode = st.radio(
+        "Activation Mode",
+        ["Always Active", "Glob Patterns", "Agent Decision", "Manual Only"],
+        horizontal=True,
+        key="rb_mode",
+        help="How should Cursor trigger this rule?",
+    )
+    
+    rb_globs: list[str] = []
+    rb_always = False
+    
+    if rb_mode == "Always Active":
+        rb_always = True
+        st.caption("✅ This rule will always be included in AI context. Keep it concise.")
+    elif rb_mode == "Glob Patterns":
+        col_preset, col_custom = st.columns([1, 1])
+        with col_preset:
+            selected_presets = st.multiselect(
+                "Quick Select (presets)",
+                options=list(COMMON_GLOB_PRESETS.keys()),
+                key="rb_presets",
+            )
+            for preset in selected_presets:
+                rb_globs.extend(COMMON_GLOB_PRESETS[preset])
+        with col_custom:
+            custom_globs_str = st.text_input(
+                "Custom patterns (comma-separated)",
+                placeholder='src/api/**/*.ts, **/*.test.js',
+                key="rb_custom_globs",
+            )
+            if custom_globs_str:
+                rb_globs.extend([g.strip().strip('"').strip("'") for g in custom_globs_str.split(",") if g.strip()])
+        # Deduplicate while preserving order
+        rb_globs = list(dict.fromkeys(rb_globs))
+        if rb_globs:
+            st.caption(f"📁 Patterns: `{'`, `'.join(rb_globs)}`")
+    elif rb_mode == "Agent Decision":
+        st.caption("🤖 The AI decides whether to include this rule based on the description field.")
+    else:
+        st.caption("📌 Only included when you type `@rule-name` in Cursor chat.")
+    
+    rb_body = st.text_area(
+        "Rule Content (Markdown)",
+        value="## Guidelines\n\n- \n\n## Best Practices\n\n- \n\n## Examples\n\n(Add code examples here)",
+        height=250,
+        key="rb_body",
+    )
+    
+    # Preview
+    if rb_title:
+        generated_rule = build_rule_content(
+            description=rb_description,
+            globs=rb_globs,
+            always_apply=rb_always,
+            title=rb_title,
+            body=rb_body,
+        )
+        
+        with st.expander("📄 Preview Generated Rule", expanded=True):
+            st.code(generated_rule, language="markdown")
+        
+        rb_filename = rb_title.lower().replace(" ", "-").replace("/", "-") + ".md"
+        st.download_button(
+            label=f"⬇️ Download {rb_filename}",
+            data=generated_rule,
+            file_name=rb_filename,
+            mime="text/markdown",
+            key="rb_download",
+        )
+        st.caption(f"Save to: `.cursor/rules/{rb_filename}`")
+    else:
+        st.info("👆 Enter a rule title to see the preview and download button.")
+    
+    st.markdown("---")
+    
+    # =================================================================
+    # RULE VALIDATOR
+    # =================================================================
+    
+    st.markdown("### ✅ Rule Validator")
+    st.markdown("Paste an existing rule to check for common issues and get improvement suggestions.")
+    
+    rv_input = st.text_area(
+        "Paste your rule content here",
+        height=200,
+        placeholder="---\ndescription: My coding standards\nglobs:\n  - \"**/*.py\"\nalwaysApply: false\n---\n\n# Coding Standards\n\n- Use type hints\n- ...",
+        key="rv_input",
+    )
+    
+    if rv_input.strip():
+        results = validate_rule(rv_input)
+        
+        # Summary counts
+        passes = sum(1 for r in results if r["level"] == "pass")
+        warnings = sum(1 for r in results if r["level"] == "warning")
+        errors = sum(1 for r in results if r["level"] == "error")
+        
+        st.markdown(f"**Results:** ✅ {passes} passed · ⚠️ {warnings} warnings · ❌ {errors} errors")
+        
+        for result in results:
+            if result["level"] == "pass":
+                st.success(f"**{result['message']}** — {result['detail']}")
+            elif result["level"] == "warning":
+                st.warning(f"**{result['message']}** — {result['detail']}")
+            elif result["level"] == "error":
+                st.error(f"**{result['message']}** — {result['detail']}")
+            elif result["level"] == "info":
+                st.info(f"**{result['message']}** — {result['detail']}")
+    else:
+        st.caption("Paste a rule above to validate it.")
+    
+    st.markdown("---")
+    
+    # =================================================================
+    # AI PROMPTS (existing content below)
+    # =================================================================
+    
     st.markdown("## 🤖 AI-Powered Generation Prompts")
     st.markdown("""
     These prompts let you use **Cursor's AI** to generate rules and commands specific to your own project.
-    Simply copy a prompt and paste it into Cursor chat - the AI will analyze your codebase and generate tailored content.
+    Simply copy a prompt and paste it into Cursor chat — the AI will analyze your codebase and generate tailored content.
     """)
     
     st.warning("""
