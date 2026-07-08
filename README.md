@@ -21,13 +21,16 @@ A Streamlit app that helps developers **master Cursor Rules & Commands** — fro
 The downloadable starter kit includes:
 
 ### Rules (5 files)
+
+Rule files use the `.mdc` extension — required by Cursor (plain `.md` files in `.cursor/rules/` are ignored).
+
 | Rule | Purpose |
 |------|---------|
-| `cursor-rules.md` | Meta rule - guidelines for writing rules |
-| `project-structure.md` | Project overview template (customize this!) |
-| `coding-standards.md` | Generic coding conventions |
-| `git-conventions.md` | Commit message and branch naming |
-| `rule-self-improvement.md` | Guidelines for evolving rules |
+| `cursor-rules.mdc` | Meta rule - guidelines for writing rules |
+| `project-structure.mdc` | Project overview template (customize this!) |
+| `coding-standards.mdc` | Generic coding conventions |
+| `git-conventions.mdc` | Commit message and branch naming |
+| `rule-self-improvement.mdc` | Guidelines for evolving rules |
 
 ### Commands (10 files)
 | Command | Purpose |
@@ -102,19 +105,20 @@ cursor_rules_commands/
     ├── commands/              # Example slash commands (7 files)
     ├── plans/                 # Cursor plan files (gitignored)
     └── rules/
-        ├── cursor-rules.md                # Meta rule about writing rules
-        ├── project-structure.md           # Project architecture (alwaysApply)
-        └── rule-self-improvement.md       # Meta rule for evolving rules
+        ├── cursor-rules.mdc               # Meta rule about writing rules
+        ├── project-structure.mdc          # Project architecture (alwaysApply)
+        └── rule-self-improvement.mdc      # Meta rule for evolving rules
 ```
 
 ## 📚 New Cursor Features Covered
 
 This app covers the latest Cursor documentation including:
 
-- **Rule Types** — Project Rules, User Rules, Team Rules, AGENTS.md
+- **Rule Types** — Project Rules (`.mdc`), User Rules, Team Rules, AGENTS.md (incl. nested)
 - **Activation Modes** — Always, Glob patterns, Manual (`@rule-name`), Agent Decision
-- **Hooks System** — 6 lifecycle hooks for extending AI operations
-- **Best Practices** — Rule organization, file size guidelines, numbered files
+- **Hooks System** — 20+ lifecycle hooks (`hooks.json` v1) for observing and gating the agent loop
+- **Skills Migration** — Commands are now legacy; notes on migrating to Skills with `/migrate-to-skills`
+- **Best Practices** — Rule organization, file size guidelines (official 500-line max), referencing files instead of pasting code
 
 ## 🛠️ Build Tools
 
@@ -139,13 +143,13 @@ The **Build** tab includes interactive tools:
 Slash commands (like `/explain` or `/debug`) that you can invoke in Cursor's chat. They're stored in `.cursor/commands/` as markdown files.
 
 ### Rules
-Background context that Cursor's AI always considers when working with your code. They're stored in `.cursor/rules/` and can be configured to apply globally or to specific file patterns using YAML frontmatter.
+Background context that Cursor's AI always considers when working with your code. They're stored in `.cursor/rules/` as `.mdc` files and can be configured to apply globally or to specific file patterns using YAML frontmatter.
 
 ## 🔗 Resources
 
 ### Official Documentation
-- [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
-- [Cursor Commands Documentation](https://cursor.com/docs/context/commands)
+- [Cursor Rules Documentation](https://cursor.com/docs/context/rules)
+- [Cursor Skills Documentation](https://cursor.com/docs/skills) — successor to slash commands
 - [Cursor Hooks Documentation](https://cursor.com/docs/agent/hooks)
 - [Cursor Quickstart Guide](https://docs.cursor.com/get-started/quickstart)
 

@@ -18,9 +18,9 @@ from typing import Dict, List, Optional, Tuple
 RULES_VS_COMMANDS = {
     "rules": {
         "purpose": "Provide persistent context/guidance to Cursor AI",
-        "location": ".cursor/rules/",
+        "location": ".cursor/rules/ (*.mdc files)",
         "triggered_by": "File patterns (globs) or alwaysApply flag",
-        "format": "Markdown with YAML frontmatter",
+        "format": ".mdc — Markdown with YAML frontmatter",
         "use_cases": ["Coding standards", "Project structure", "Architecture guidelines"],
         "invocation": "Automatic (based on file patterns or alwaysApply)",
         "scope": "Project-wide context that persists across sessions",
@@ -89,71 +89,81 @@ RULE_ACTIVATION_MODES = {
 RULE_TYPES = {
     "project": {
         "name": "Project Rules",
-        "location": ".cursor/rules/",
-        "description": "Version-controlled rules scoped to your codebase. Shared with team via git.",
+        "location": ".cursor/rules/ (*.mdc)",
+        "description": "Version-controlled rules scoped to your codebase. Must use the .mdc extension — plain .md files are ignored. Can be organized in subdirectories.",
         "icon": "📁",
     },
     "user": {
         "name": "User Rules",
-        "location": "Cursor Settings > Rules for AI",
-        "description": "Global personal rules that apply to all your projects. Not version-controlled.",
+        "location": "Cursor Settings > Rules",
+        "description": "Global personal rules that apply to all your projects. Apply to Agent chat only (not Inline Edit or Tab). Not version-controlled.",
         "icon": "👤",
     },
     "team": {
         "name": "Team Rules",
         "location": "Cursor Dashboard (Team/Enterprise)",
-        "description": "Organization-wide rules managed from the Cursor dashboard. Requires Team or Enterprise plan.",
+        "description": "Organization-wide rules managed from the dashboard. Highest precedence (Team → Project → User), and admins can enforce them.",
         "icon": "👥",
     },
     "agents_md": {
         "name": "AGENTS.md",
-        "location": "Project root",
-        "description": "Simple markdown file for project-wide AI guidance. Works with Cursor, GitHub Copilot, and other AI tools.",
+        "location": "Project root (+ subdirectories)",
+        "description": "Simple markdown alternative that works with Cursor, GitHub Copilot, and other AI tools. Nested AGENTS.md files are supported — the closest one wins.",
         "icon": "📄",
     },
 }
 
 # Hooks documentation
 CURSOR_HOOKS = {
-    "overview": "Cursor Hooks allow you to observe, control, and extend the agent loop using custom scripts. They run before or after defined stages of the agent lifecycle.",
-    "location": ".cursor/hooks.json",
-    "available_hooks": [
-        {
-            "name": "beforeSubmitPrompt",
-            "description": "Runs when the prompt is first submitted",
-            "use_case": "Validate or modify prompts before sending",
-        },
-        {
-            "name": "beforeShellExecution",
-            "description": "Runs before any shell command executes",
-            "use_case": "Gate risky commands, add logging",
-        },
-        {
-            "name": "beforeMCPExecution",
-            "description": "Runs before MCP (Model Context Protocol) execution",
-            "use_case": "Control MCP tool access",
-        },
-        {
-            "name": "beforeReadFile",
-            "description": "Runs before a file is read",
-            "use_case": "Scan for sensitive content, access control",
-        },
-        {
-            "name": "afterFileEdit",
-            "description": "Runs after a file is edited",
-            "use_case": "Auto-format, lint, run tests",
-        },
-        {
-            "name": "stop",
-            "description": "Runs when the task is completed",
-            "use_case": "Cleanup, notifications, analytics",
-        },
-    ],
+    "overview": (
+        "Cursor Hooks let you observe, control, and extend the agent loop with custom scripts "
+        "(or LLM-evaluated prompt checks) that run at defined lifecycle stages. "
+        "Command hooks receive JSON on stdin; exit code 0 allows the action, exit code 2 denies it."
+    ),
+    "location": "`.cursor/hooks.json` (project) · `~/.cursor/hooks.json` (user) · Team/Enterprise via dashboard/MDM — priority: Enterprise → Team → Project → User",
+    "options_summary": (
+        "`command` (script to run) · `type` (`command`, or LLM-evaluated `prompt`) · "
+        "`matcher` (filter by tool/command/subagent) · `timeout` · "
+        "`failClosed` (block the action if the hook fails) · `loop_limit`"
+    ),
+    "hook_groups": {
+        "Agent lifecycle": [
+            {"name": "sessionStart", "description": "Agent session begins — inject setup or extra context"},
+            {"name": "sessionEnd", "description": "Agent session ends"},
+            {"name": "beforeSubmitPrompt", "description": "User submits a prompt — validate or block it"},
+            {"name": "preToolUse", "description": "Before any tool call — observe or deny"},
+            {"name": "postToolUse", "description": "After a tool call succeeds"},
+            {"name": "postToolUseFailure", "description": "After a tool call fails"},
+            {"name": "beforeShellExecution", "description": "Before shell commands — gate risky commands"},
+            {"name": "afterShellExecution", "description": "After shell commands complete"},
+            {"name": "beforeMCPExecution", "description": "Before MCP tool calls — control MCP access"},
+            {"name": "afterMCPExecution", "description": "After MCP tool calls"},
+            {"name": "beforeReadFile", "description": "Before the agent reads a file — protect sensitive content"},
+            {"name": "afterFileEdit", "description": "After the agent edits a file — auto-format, lint"},
+            {"name": "subagentStart", "description": "A subagent is launched"},
+            {"name": "subagentStop", "description": "A subagent finishes"},
+            {"name": "preCompact", "description": "Before context-window compaction"},
+            {"name": "afterAgentResponse", "description": "After each agent response"},
+            {"name": "afterAgentThought", "description": "After each agent reasoning step"},
+            {"name": "stop", "description": "Agent loop completes — cleanup, notifications, analytics"},
+        ],
+        "Tab (inline completions)": [
+            {"name": "beforeTabFileRead", "description": "Gate file access for Tab completions"},
+            {"name": "afterTabFileEdit", "description": "Post-process edits made by Tab"},
+        ],
+        "App lifecycle": [
+            {"name": "workspaceOpen", "description": "A workspace opens or its folders change"},
+        ],
+    },
     "example": """{
+  "version": 1,
   "hooks": {
-    "afterFileEdit": {
-      "command": "prettier --write {filePath}"
-    }
+    "afterFileEdit": [
+      { "command": "./.cursor/hooks/format.sh" }
+    ],
+    "beforeShellExecution": [
+      { "command": "./.cursor/hooks/guard-shell.sh", "failClosed": true }
+    ]
   }
 }""",
 }
@@ -237,23 +247,23 @@ def get_project_root() -> Path:
 
 def load_example_files() -> Dict[str, Dict[str, str]]:
     """
-    Loads actual .md files from the .cursor/ directory.
-    
+    Loads actual rule and command files from the .cursor/ directory.
+
     Returns:
         Dict with 'rules' and 'commands' keys, each containing
         filename -> content mappings.
     """
     project_root = get_project_root()
-    
+
     result = {
         "rules": {},
         "commands": {},
     }
-    
-    # Load rules
+
+    # Load rules (.mdc is the required extension; .md kept for legacy files)
     rules_dir = project_root / ".cursor" / "rules"
     if rules_dir.exists():
-        for file_path in rules_dir.glob("*.md"):
+        for file_path in sorted(list(rules_dir.glob("*.mdc")) + list(rules_dir.glob("*.md"))):
             result["rules"][file_path.name] = file_path.read_text(encoding="utf-8")
     
     # Load commands
@@ -374,7 +384,7 @@ alwaysApply: true
 
 
 def get_project_structure_template() -> str:
-    """Returns the template for project-structure.md files."""
+    """Returns the template for project-structure.mdc files."""
     return PROJECT_STRUCTURE_TEMPLATE
 
 
@@ -385,7 +395,7 @@ def generate_template_based_structure(
     architecture_notes: str,
 ) -> str:
     """
-    Generates a project-structure.md using template-based approach.
+    Generates a project-structure.mdc using template-based approach.
     Used as fallback when no API key is available.
     """
     tech_list = "\n".join([f"- **{tech}**" for tech in tech_stack]) if tech_stack else "- Not specified"
@@ -413,7 +423,7 @@ def build_rule_content(
     title: str,
     body: str,
 ) -> str:
-    """Builds a complete Cursor rule .md file from structured inputs."""
+    """Builds a complete Cursor rule (.mdc) file from structured inputs."""
     lines = ["---"]
     lines.append(f"description: {description}" if description else "description: ")
 
@@ -530,11 +540,17 @@ def validate_rule(content: str) -> List[Dict]:
 
     if not body or not body.strip():
         results.append({"level": "warning", "message": "Empty rule body", "detail": "The rule has frontmatter but no content. Add actionable guidelines."})
+    elif total_lines > 500:
+        results.append({
+            "level": "error",
+            "message": f"File is too long ({total_lines} lines)",
+            "detail": "Official Cursor guidance: keep rules under 500 lines. Split into multiple, composable rules.",
+        })
     elif total_lines > 150:
         results.append({
             "level": "warning",
             "message": f"File is long ({total_lines} lines)",
-            "detail": "Recommended: 50–150 lines. Consider splitting into multiple focused rules.",
+            "detail": "Recommended: 50–150 lines (official maximum is 500). Consider splitting into multiple focused rules.",
         })
     elif total_lines >= 50:
         results.append({"level": "pass", "message": f"Good length ({total_lines} lines)", "detail": "Within the recommended 50–150 line range."})
@@ -552,6 +568,22 @@ def validate_rule(content: str) -> List[Dict]:
     if body and not body.strip().startswith("#"):
         results.append({"level": "info", "message": "No markdown heading", "detail": "Consider starting the body with a # heading for readability."})
 
+    # Large pasted code blocks — official guidance is to reference files instead
+    fence_lines = 0
+    in_fence = False
+    for line in (body or "").split("\n"):
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            fence_lines += 1
+    if fence_lines > 40:
+        results.append({
+            "level": "warning",
+            "message": f"Large code blocks ({fence_lines} lines inside fences)",
+            "detail": "Reference project files (e.g. @src/utils/helpers.ts) instead of pasting long code samples — pasted code goes stale as the codebase evolves.",
+        })
+
     # Token estimate (~1 token per 4 chars for English text)
     char_count = len(content)
     estimated_tokens = char_count // 4
@@ -559,6 +591,13 @@ def validate_rule(content: str) -> List[Dict]:
         "level": "info",
         "message": f"Estimated size: ~{estimated_tokens} tokens",
         "detail": f"{char_count} chars, {total_lines} lines. Budget: ~2,000–3,000 tokens across all active rules.",
+    })
+
+    # Extension reminder — .mdc is required for project rules
+    results.append({
+        "level": "info",
+        "message": "Save as a .mdc file",
+        "detail": "Project rules must use the .mdc extension inside .cursor/rules/ — plain .md files there are ignored by Cursor (AGENTS.md in the project root is the markdown alternative).",
     })
 
     return results
@@ -573,9 +612,9 @@ PROMPT_TEMPLATES = {
         {
             "name": "Project Structure Rule",
             "description": "Generate a rule documenting your project's directory structure",
-            "prompt": """@.cursor/rules/cursor-rules.md @Codebase
+            "prompt": """@.cursor/rules/cursor-rules.mdc @Codebase
 
-Create a project-structure.md rule documenting this project's architecture.
+Create a project-structure.mdc rule documenting this project's architecture.
 
 ## REQUIRED SECTIONS:
 1. **Overview** - What the project does (2-3 sentences max)
@@ -598,14 +637,14 @@ globs: []
 alwaysApply: true
 ---
 ```""",
-            "output_file": ".cursor/rules/project-structure.md",
+            "output_file": ".cursor/rules/project-structure.mdc",
         },
         {
             "name": "Coding Standards Rule",
             "description": "Generate coding standards based on your existing codebase",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create a coding-standards.md rule based on patterns found in this codebase.
+Create a coding-standards.mdc rule based on patterns found in this codebase.
 
 ## REQUIRED SECTIONS:
 1. **Naming Conventions** - Variables, functions, classes, files
@@ -627,14 +666,14 @@ globs: ["**/*.[ext]"]  # Use actual file extensions
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/coding-standards.md",
+            "output_file": ".cursor/rules/coding-standards.mdc",
         },
         {
             "name": "Tech Stack Guidelines",
             "description": "Generate guidelines specific to your tech stack",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create a tech-stack.md rule with best practices for this project's technologies.
+Create a tech-stack.mdc rule with best practices for this project's technologies.
 
 ## REQUIRED SECTIONS:
 1. **Core Technologies** - Main frameworks/libraries with versions
@@ -657,14 +696,14 @@ globs: []
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/tech-stack.md",
+            "output_file": ".cursor/rules/tech-stack.mdc",
         },
         {
             "name": "API Design Rule",
             "description": "Document API patterns and conventions",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create an api-conventions.md rule documenting API patterns in this project.
+Create an api-conventions.mdc rule documenting API patterns in this project.
 
 ## REQUIRED SECTIONS:
 1. **Endpoint Patterns** - URL structure and naming
@@ -686,14 +725,14 @@ globs: ["**/routes/**", "**/api/**", "**/controllers/**"]
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/api-conventions.md",
+            "output_file": ".cursor/rules/api-conventions.mdc",
         },
         {
             "name": "Testing Conventions Rule",
             "description": "Document testing patterns and requirements",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create a testing-conventions.md rule based on test patterns in this project.
+Create a testing-conventions.mdc rule based on test patterns in this project.
 
 ## REQUIRED SECTIONS:
 1. **File Structure** - Test file naming and location
@@ -715,14 +754,14 @@ globs: ["**/*test*", "**/*spec*", "**/tests/**"]
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/testing-conventions.md",
+            "output_file": ".cursor/rules/testing-conventions.mdc",
         },
         {
             "name": "Database & Models Rule",
             "description": "Document data models and database patterns",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create a data-models.md rule documenting database patterns in this project.
+Create a data-models.mdc rule documenting database patterns in this project.
 
 ## REQUIRED SECTIONS:
 1. **Data Models** - Key models/schemas overview
@@ -744,14 +783,14 @@ globs: ["**/models/**", "**/schemas/**", "**/entities/**"]
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/data-models.md",
+            "output_file": ".cursor/rules/data-models.mdc",
         },
         {
             "name": "Component Architecture Rule",
             "description": "Document UI component patterns (for frontend projects)",
-            "prompt": """@Codebase @.cursor/rules/cursor-rules.md
+            "prompt": """@Codebase @.cursor/rules/cursor-rules.mdc
 
-Create a component-architecture.md rule for UI patterns in this project.
+Create a component-architecture.mdc rule for UI patterns in this project.
 
 ## REQUIRED SECTIONS:
 1. **Component Structure** - File organization and naming
@@ -773,14 +812,14 @@ globs: ["**/components/**", "**/*.tsx", "**/*.jsx"]
 alwaysApply: false
 ---
 ```""",
-            "output_file": ".cursor/rules/component-architecture.md",
+            "output_file": ".cursor/rules/component-architecture.mdc",
         },
         {
             "name": "Rule Self-Improvement",
             "description": "Generate a meta-rule that keeps your rules evolving with your codebase",
-            "prompt": """@.cursor/rules/cursor-rules.md @Codebase
+            "prompt": """@.cursor/rules/cursor-rules.mdc @Codebase
 
-Create a rule-self-improvement.md that helps keep Cursor rules updated.
+Create a rule-self-improvement.mdc that helps keep Cursor rules updated.
 
 ## REQUIRED SECTIONS:
 1. **When to Add Rules** - Triggers for new rules
@@ -802,7 +841,7 @@ globs: [".cursor/rules/*"]
 alwaysApply: true
 ---
 ```""",
-            "output_file": ".cursor/rules/rule-self-improvement.md",
+            "output_file": ".cursor/rules/rule-self-improvement.mdc",
         },
     ],
     "commands": [
@@ -882,6 +921,43 @@ Title should be: # New Feature Setup""",
 }
 
 # Generic commands that work for any project (from Cursor docs best practices)
+# The flagship "apply rules to an existing project" prompt — one paste in Cursor
+# chat generates the 3 essential rules from the user's own codebase.
+# Shown on the Overview hero and in Build > AI Prompts.
+STARTER_PACK_PROMPT = """@Codebase
+
+I need to set up Cursor AI rules for this project. Create these 3 essential rule files:
+
+## 1. .cursor/rules/cursor-rules.mdc (Meta Rule)
+A concise guide for writing Cursor rules (~40 lines):
+- Frontmatter fields (description, globs, alwaysApply)
+- Best practices for rule writing
+- Use alwaysApply: false, globs: [".cursor/rules/*"]
+
+## 2. .cursor/rules/project-structure.mdc (Architecture)
+Document this project's structure (~60-80 lines):
+- Brief overview (2-3 sentences)
+- Directory layout (2 levels deep max)
+- Key technologies (bullet points)
+- How to run the app
+- Use alwaysApply: true
+
+## 3. .cursor/rules/coding-standards.mdc (Conventions)
+Based on patterns found in this codebase (~50-60 lines):
+- Naming conventions actually used
+- Code style patterns observed
+- Error handling approach
+- Use globs for relevant file types (e.g., ["**/*.py"] or ["**/*.ts"])
+
+CONSTRAINTS:
+- Each file under 80 lines
+- Use YAML frontmatter for all
+- Include real examples from this codebase
+- Be concise: bullet points > paragraphs
+
+Output each file with a clear separator: --- FILE: path/to/file.mdc ---"""
+
+
 GENERIC_COMMANDS = {
     "code-review-checklist": {
         "name": "Code Review Checklist",
@@ -1323,24 +1399,24 @@ Please analyze the staged changes and generate an appropriate commit message.
     },
     "sync-docs": {
         "name": "Sync Documentation",
-        "description": "Update README.md and project-structure.md together",
+        "description": "Update README.md and project-structure.mdc together",
         "content": """# Sync Documentation
 
 ## Overview
-Update both README.md and project-structure.md to reflect current project state.
+Update both README.md and project-structure.mdc to reflect current project state.
 
 ## Instructions
 
 Analyze the current project and update documentation:
 
-### 1. Update `.cursor/rules/project-structure.md`
+### 1. Update `.cursor/rules/project-structure.mdc`
 - Scan directory structure (2 levels deep)
 - Update tech stack if dependencies changed
 - Update run commands if changed
 - Keep under 80 lines
 
 ### 2. Update `README.md`
-- Sync project description with project-structure.md
+- Sync project description with project-structure.mdc
 - Update installation/setup instructions
 - Update usage examples if needed
 - Keep human-friendly (more detail than rules file)
@@ -1382,15 +1458,15 @@ EXTERNAL_RESOURCES = {
     "official": [
         {
             "name": "Cursor Rules Documentation",
-            "url": "https://docs.cursor.com/context/rules-for-ai",
-            "description": "Official Cursor documentation on Rules for AI - the authoritative source for project rules, global rules, and frontmatter syntax.",
+            "url": "https://cursor.com/docs/context/rules",
+            "description": "Official Cursor documentation on Rules - the authoritative source for project rules (.mdc), team rules, AGENTS.md, and frontmatter syntax.",
             "type": "Official",
             "icon": "📘",
         },
         {
-            "name": "Cursor Commands Documentation",
-            "url": "https://cursor.com/docs/context/commands",
-            "description": "Official guide on creating and using custom commands with /slash syntax. Includes team commands for Enterprise users.",
+            "name": "Cursor Skills Documentation",
+            "url": "https://cursor.com/docs/skills",
+            "description": "Official guide to Agent Skills — the successor to slash commands. Covers the SKILL.md format, bundled scripts/references, and /migrate-to-skills.",
             "type": "Official",
             "icon": "📗",
         },
@@ -1439,6 +1515,14 @@ EXTERNAL_RESOURCES = {
             "description": "Open standard for AI agent guidance. Single markdown file that works with Cursor, GitHub Copilot, and other AI tools.",
             "type": "Community",
             "icon": "📄",
+            "stars": "New",
+        },
+        {
+            "name": "Agent Skills Standard",
+            "url": "https://agentskills.io",
+            "description": "Open standard specification behind SKILL.md — portable skills that work across Cursor, Claude Code, and other AI agents.",
+            "type": "Community",
+            "icon": "🧩",
             "stars": "New",
         },
         {
@@ -1718,7 +1802,7 @@ def get_quick_tips(category: str = "general") -> List[str]:
 # ============================================================================
 
 STARTER_KIT_RULES = {
-    "cursor-rules.md": """---
+    "cursor-rules.mdc": """---
 description: Guidelines for writing effective Cursor rules
 globs: 
   - ".cursor/rules/*"
@@ -1751,15 +1835,17 @@ Rules can be triggered through:
 
 ## Best Practices
 
+- Save rules as `.mdc` files — plain `.md` files in `.cursor/rules/` are ignored by Cursor
 - Keep rules focused on a single concern
 - Use specific globs to avoid noise (e.g., `src/**/*.ts` not `**/*`)
 - Write clear, actionable instructions
-- Keep content concise (50-150 lines recommended)
+- Keep content concise (50-150 lines recommended, official maximum 500)
+- Reference project files instead of pasting their content (pasted code goes stale)
 - Include examples where helpful
 - Multiple small focused rules > one giant rule
 """,
 
-    "project-structure.md": """---
+    "project-structure.mdc": """---
 description: Project structure and architecture overview
 globs: []
 alwaysApply: true
@@ -1811,7 +1897,7 @@ project-root/
 | `VAR_NAME` | Description | Yes/No |
 """,
 
-    "coding-standards.md": """---
+    "coding-standards.mdc": """---
 description: Coding standards and conventions for this project
 globs: []
 alwaysApply: true
@@ -1853,7 +1939,7 @@ alwaysApply: true
 - Use TODO/FIXME for tracking issues
 """,
 
-    "git-conventions.md": """---
+    "git-conventions.mdc": """---
 description: Git commit and branching conventions
 globs:
   - ".git/**"
@@ -1910,7 +1996,7 @@ Closes #123
 ```
 """,
 
-    "rule-self-improvement.md": """---
+    "rule-self-improvement.mdc": """---
 description: Guidelines for continuously improving Cursor rules
 globs:
   - ".cursor/rules/*"
@@ -2038,20 +2124,23 @@ Ready-to-use Cursor Rules and Commands for any project.
 
 1. Copy the `.cursor/` folder to your project root
 2. (Optional) Copy `AGENTS.md` to your project root
-3. Customize `project-structure.md` with your project details
+3. Customize `project-structure.mdc` with your project details
 4. Start using commands by typing `/` in Cursor chat!
 
 ## What's Included
 
 ### Rules (`.cursor/rules/`)
 
+> **Note:** Rule files use the `.mdc` extension — this is required by Cursor.
+> Plain `.md` files inside `.cursor/rules/` are silently ignored.
+
 | Rule | Purpose |
 |------|---------|
-| `cursor-rules.md` | Guidelines for writing effective rules |
-| `project-structure.md` | Project overview template (customize this!) |
-| `coding-standards.md` | Generic coding conventions |
-| `git-conventions.md` | Commit message and branch naming |
-| `rule-self-improvement.md` | Guidelines for evolving rules |
+| `cursor-rules.mdc` | Guidelines for writing effective rules |
+| `project-structure.mdc` | Project overview template (customize this!) |
+| `coding-standards.mdc` | Generic coding conventions |
+| `git-conventions.mdc` | Commit message and branch naming |
+| `rule-self-improvement.mdc` | Guidelines for evolving rules |
 
 ### Commands (`.cursor/commands/`)
 
@@ -2075,15 +2164,18 @@ Place in your project root for project-wide AI guidance.
 
 ## Customization
 
-1. **Edit `project-structure.md`** - Fill in your project details
-2. **Edit `coding-standards.md`** - Adjust to your team's conventions
+1. **Edit `project-structure.mdc`** - Fill in your project details
+2. **Edit `coding-standards.mdc`** - Adjust to your team's conventions
 3. **Add tech-specific rules** - Create rules for your framework
 
 ## Learn More
 
-- [Cursor Rules Documentation](https://docs.cursor.com/context/rules-for-ai)
-- [Cursor Commands Documentation](https://cursor.com/docs/context/commands)
+- [Cursor Rules Documentation](https://cursor.com/docs/context/rules)
+- [Cursor Skills Documentation](https://cursor.com/docs/skills) - the successor to slash commands
 - [cursor.directory](https://cursor.directory) - Community rules
+
+> **Heads-up:** Cursor has superseded slash commands with **Skills**. The commands in this
+> kit still work, but consider running `/migrate-to-skills` in Cursor to convert them.
 
 ---
 
@@ -2122,11 +2214,11 @@ def generate_starter_kit_zip() -> bytes:
 def get_starter_kit_options() -> Dict[str, Dict[str, str]]:
     """Returns starter kit items organized for the customizer UI."""
     rule_descriptions = {
-        "cursor-rules.md": "Meta rule — guidelines for writing rules",
-        "project-structure.md": "Project overview template (customize this!)",
-        "coding-standards.md": "Generic coding conventions",
-        "git-conventions.md": "Commit message and branch naming",
-        "rule-self-improvement.md": "Guidelines for evolving rules",
+        "cursor-rules.mdc": "Meta rule — guidelines for writing rules",
+        "project-structure.mdc": "Project overview template (customize this!)",
+        "coding-standards.mdc": "Generic coding conventions",
+        "git-conventions.mdc": "Commit message and branch naming",
+        "rule-self-improvement.mdc": "Guidelines for evolving rules",
     }
     command_descriptions = {}
     for name in STARTER_KIT_COMMANDS:

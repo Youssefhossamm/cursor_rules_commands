@@ -32,6 +32,9 @@ wheels/
 *.swo
 .cursor/plans/
 
+# Local planning docs
+ENHANCEMENT_PLAN.md
+
 # Environment variables
 .env
 .env.local

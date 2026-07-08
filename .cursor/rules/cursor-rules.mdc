@@ -1,8 +1,7 @@
 ---
 description: Guidelines for writing effective Cursor rules
-globs: 
-  - "**/*.md"
-  - ".cursor/rules/*"
+globs:
+  - ".cursor/rules/**"
 alwaysApply: false
 ---
 
@@ -29,8 +28,10 @@ Every rule file should include:
 
 ## Best Practices
 
+- Save rules as `.mdc` files — plain `.md` files in `.cursor/rules/` are ignored by Cursor
 - Keep rules focused on a single concern
 - Use specific globs to avoid noise
 - Write clear, actionable instructions
+- Keep rules under 500 lines (official guidance) — split large rules into composable ones
 - Include examples where helpful
 - Test rules by opening matching files

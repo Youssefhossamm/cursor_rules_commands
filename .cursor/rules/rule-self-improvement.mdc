@@ -30,7 +30,7 @@ from utils.logging import get_logger
 logger = get_logger(__name__)
 ```
 
-→ Add to `coding-standards.md` with standardized examples.
+→ Add to `coding-standards.mdc` with standardized examples.
 
 When you see repeated error handling:
 
@@ -61,7 +61,7 @@ except SpecificError as e:
 ## Documentation Sync
 
 Keep these files in sync when project structure changes:
-- `README.md` ↔ `.cursor/rules/project-structure.md`
+- `README.md` ↔ `.cursor/rules/project-structure.mdc`
 
 **Trigger sync when:**
 - New directories or key files added
@@ -71,4 +71,4 @@ Keep these files in sync when project structure changes:
 
 Use `/sync-docs` command to update both files together.
 
-See @.cursor/rules/cursor-rules.md for formatting guidelines.
+See @.cursor/rules/cursor-rules.mdc for formatting guidelines.

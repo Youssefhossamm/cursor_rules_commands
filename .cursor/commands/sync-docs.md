@@ -1,20 +1,20 @@
 # Sync Documentation
 
 ## Overview
-Update both README.md and project-structure.md to reflect current project state.
+Update both README.md and project-structure.mdc to reflect current project state.
 
 ## Instructions
 
 Analyze the current project and update documentation:
 
-### 1. Update `.cursor/rules/project-structure.md`
+### 1. Update `.cursor/rules/project-structure.mdc`
 - Scan directory structure (2 levels deep)
 - Update tech stack if dependencies changed
 - Update run commands if changed
 - Keep under 80 lines
 
 ### 2. Update `README.md`
-- Sync project description with project-structure.md
+- Sync project description with project-structure.mdc
 - Update installation/setup instructions
 - Update usage examples if needed
 - Keep human-friendly (more detail than rules file)
@@ -28,7 +28,7 @@ Analyze the current project and update documentation:
 ## What to Check
 
 ```
-README.md                          project-structure.md
+README.md                          project-structure.mdc
 ─────────────────────────────────────────────────────────
 Project description        ←→     Overview section
 Installation steps         ←→     Running the Application
