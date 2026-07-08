@@ -101,9 +101,17 @@ cursor_rules_commands/
 ├── cursor_docs_app.py        # UI: layout, CSS, sidebar, 5 tabs
 ├── cursor_docs_content.py    # Data: all content, templates, ZIP generation
 ├── requirements.txt          # Dependencies (streamlit, pyyaml)
+├── requirements-dev.txt      # Dev dependencies (pytest)
 ├── README.md                 # Project documentation
 ├── LICENSE                   # MIT License
 ├── .gitignore               # Git ignore patterns
+│
+├── tests/
+│   ├── test_content.py       # Validators, builders, starter kit ZIPs
+│   └── test_app.py           # Streamlit AppTest smoke & interaction tests
+│
+├── .github/
+│   └── workflows/ci.yml      # Runs pytest on every push / PR
 │
 ├── .streamlit/
 │   └── config.toml           # Streamlit theme configuration
@@ -162,10 +170,10 @@ Specialists the agent can delegate to — *who does the work*. Markdown files in
 ## 🔗 Resources
 
 ### Official Documentation
-- [Cursor Rules Documentation](https://cursor.com/docs/context/rules)
+- [Cursor Rules Documentation](https://cursor.com/docs/rules)
 - [Cursor Skills Documentation](https://cursor.com/docs/skills) — successor to slash commands
-- [Cursor Hooks Documentation](https://cursor.com/docs/agent/hooks)
-- [Cursor Quickstart Guide](https://docs.cursor.com/get-started/quickstart)
+- [Cursor Subagents Documentation](https://cursor.com/docs/subagents)
+- [Cursor Hooks Documentation](https://cursor.com/docs/hooks)
 
 ### Community
 - [cursor.directory](https://cursor.directory) - Browse community rules

@@ -36,6 +36,7 @@ from cursor_docs_content import (
     SKILL_FRONTMATTER_FIELDS,
     get_skills_docs,
     get_subagents_docs,
+    get_whats_new,
     get_starter_kit_skills,
     get_starter_kit_subagents,
     build_skill_content,
@@ -57,36 +58,38 @@ st.set_page_config(
 # ============================================================================
 # CUSTOM CSS
 # ============================================================================
+# Theme-agnostic styling: neutral rgba overlays + mid-tone accents that stay
+# readable on both Streamlit light and dark themes. Text colors are inherited
+# from the active theme rather than hardcoded.
 
 st.markdown("""
 <style>
     /* ===== UI ENHANCEMENTS ===== */
-    
+
     /* Container width */
     .main .block-container {
         max-width: 1200px;
     }
-    
+
     /* === CARDS with hover effects === */
-    
+
     /* Rules card - green/teal accent */
     .rule-card {
-        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-        border: 1px solid #86efac;
+        background: rgba(34, 197, 94, 0.08);
+        border: 1px solid rgba(34, 197, 94, 0.45);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 0.75rem 0;
-        color: #1f2937;
         transition: all 0.2s ease;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
+
     .rule-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
         border-color: #22c55e;
     }
-    
+
     .rule-card h3 {
         color: #16a34a !important;
         margin-top: 0 !important;
@@ -94,190 +97,190 @@ st.markdown("""
         align-items: center;
         gap: 0.5rem;
     }
-    
-    /* Commands card - amber/orange accent */
+
+    .rule-card h4 {
+        color: #16a34a !important;
+    }
+
+    /* Commands/skills card - amber/orange accent */
     .command-card {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-        border: 1px solid #fcd34d;
+        background: rgba(245, 158, 11, 0.09);
+        border: 1px solid rgba(245, 158, 11, 0.45);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 0.75rem 0;
-        color: #1f2937;
         transition: all 0.2s ease;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
+
     .command-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);
         border-color: #f59e0b;
     }
-    
-    .command-card h3 {
+
+    .command-card h3, .command-card h4 {
         color: #d97706 !important;
         margin-top: 0 !important;
     }
-    
+
     /* Info card - blue accent */
     .info-card {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border: 1px solid #93c5fd;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.45);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 0.75rem 0;
-        color: #1f2937;
         transition: all 0.2s ease;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
+
     .info-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
         border-color: #3b82f6;
     }
-    
+
     .info-card h4, .info-card strong {
-        color: #2563eb !important;
+        color: #3b82f6 !important;
     }
-    
+
     /* === Annotation boxes === */
     .annotation {
-        background: #f8fafc;
+        background: rgba(99, 102, 241, 0.07);
         border-left: 4px solid #6366f1;
         padding: 0.875rem 1rem;
         margin: 0.5rem 0;
         border-radius: 0 8px 8px 0;
         font-size: 0.9rem;
-        color: #374151;
         transition: background 0.2s ease;
     }
-    
+
     .annotation:hover {
-        background: #f1f5f9;
+        background: rgba(99, 102, 241, 0.12);
     }
-    
+
     .annotation strong {
-        color: #4f46e5;
+        color: #6366f1;
     }
-    
+
     .annotation code {
-        background: #e0e7ff;
+        background: rgba(99, 102, 241, 0.15);
         padding: 2px 6px;
         border-radius: 4px;
-        color: #4338ca;
         font-size: 0.85em;
     }
-    
+
     .annotation em {
-        color: #6b7280;
+        opacity: 0.75;
     }
-    
+
     /* === Buttons with hover === */
     .stButton > button {
         border-radius: 8px;
         font-weight: 500;
         transition: all 0.2s ease;
     }
-    
+
     .stButton > button:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(74, 124, 148, 0.25);
     }
-    
+
     /* === Download buttons === */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-        border: 1px solid #6ee7b7 !important;
-        color: #047857 !important;
+        background: rgba(16, 185, 129, 0.12) !important;
+        border: 1px solid rgba(16, 185, 129, 0.5) !important;
+        color: #10b981 !important;
         transition: all 0.2s ease;
     }
-    
+
     .stDownloadButton > button:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         border-color: #10b981 !important;
     }
-    
+
     /* === Expanders with polish === */
     .streamlit-expanderHeader {
         border-radius: 8px;
         transition: background 0.2s ease;
     }
-    
+
     .streamlit-expanderHeader:hover {
-        background: #f1f5f9;
+        background: rgba(128, 128, 128, 0.1);
     }
-    
+
     /* === Tables with hover rows === */
     tr {
         transition: background 0.15s ease;
     }
-    
+
     tr:hover td {
-        background: #f8fafc !important;
+        background: rgba(128, 128, 128, 0.08) !important;
     }
-    
+
     th {
-        background: #f1f5f9 !important;
+        background: rgba(128, 128, 128, 0.12) !important;
         font-weight: 600 !important;
     }
-    
+
     /* === Links with underline animation === */
     a {
         transition: color 0.2s ease;
     }
-    
+
     /* === Code blocks === */
     code {
         font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
-        background: #f1f5f9;
+        background: rgba(128, 128, 128, 0.15);
         padding: 2px 5px;
         border-radius: 4px;
         font-size: 0.9em;
     }
-    
+
     /* === Subtle dividers === */
     hr {
         border: none !important;
         height: 1px !important;
-        background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent) !important;
+        background: linear-gradient(90deg, transparent, rgba(128,128,128,0.35) 20%, rgba(128,128,128,0.35) 80%, transparent) !important;
         margin: 1.5rem 0 !important;
     }
-    
+
     /* === Sidebar polish === */
     [data-testid="stSidebar"] a:hover {
-        color: #2563eb !important;
+        color: #3b82f6 !important;
     }
-    
+
     /* Sidebar dividers - more visible */
     [data-testid="stSidebar"] hr {
-        background: #c9d1d9 !important;
+        background: rgba(128, 128, 128, 0.35) !important;
         height: 1px !important;
         margin: 1rem 0 !important;
     }
-    
+
     /* === Tabs - more visible === */
     .stTabs [data-baseweb="tab-list"] {
-        background: #f1f5f9;
+        background: rgba(128, 128, 128, 0.09);
         padding: 6px;
         border-radius: 10px;
         gap: 4px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid rgba(128, 128, 128, 0.2);
     }
-    
+
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
         padding: 10px 20px;
         font-weight: 500;
         transition: all 0.2s ease;
     }
-    
+
     .stTabs [data-baseweb="tab"]:hover {
-        background: #e2e8f0;
+        background: rgba(128, 128, 128, 0.15);
     }
-    
+
     .stTabs [aria-selected="true"] {
-        background: #ffffff !important;
+        background: rgba(128, 128, 128, 0.22) !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         font-weight: 600;
     }
@@ -317,10 +320,10 @@ with st.sidebar:
     
     st.markdown("### 📘 Official Docs")
     st.markdown("""
-    - [Rules Documentation](https://cursor.com/docs/context/rules)
+    - [Rules Documentation](https://cursor.com/docs/rules)
     - [Skills Documentation](https://cursor.com/docs/skills)
-    - [Hooks Documentation](https://cursor.com/docs/agent/hooks)
-    - [Cursor Quickstart](https://docs.cursor.com/get-started/quickstart)
+    - [Subagents Documentation](https://cursor.com/docs/subagents)
+    - [Hooks Documentation](https://cursor.com/docs/hooks)
     """)
     
     st.markdown("---")
@@ -345,14 +348,13 @@ with st.sidebar:
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
     <h1 style="
-        font-size: 2.5rem; 
+        font-size: 2.5rem;
         margin-bottom: 0.5rem;
-        color: #1f2937;
         font-weight: 700;
     ">🚀 Cursor Kickstart</h1>
     <p style="
         font-size: 1.1rem; 
-        color: #6b7280; 
+        opacity: 0.75; 
         max-width: 600px; 
         margin: 0 auto;
     ">Master Cursor Rules, Skills & Subagents — from zero to productive in minutes</p>
@@ -539,7 +541,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="rule-card" style="min-height: 140px;">
             <strong>🤖 AI Prompts ⭐</strong><br/>
             <em>The fastest way to add tailored rules to an existing project</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ 🛠️ Build tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ 🛠️ Build tab</span>
         </div>
         """, unsafe_allow_html=True)
     with feat_row1[1]:
@@ -547,7 +549,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="rule-card" style="min-height: 140px;">
             <strong>🏗️ Rule Builder</strong><br/>
             <em>Build a .mdc rule step by step with live preview & download</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ 🛠️ Build tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ 🛠️ Build tab</span>
         </div>
         """, unsafe_allow_html=True)
     with feat_row1[2]:
@@ -555,7 +557,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="rule-card" style="min-height: 140px;">
             <strong>✅ Rule Validator</strong><br/>
             <em>Paste any rule — get issues, tips & a token estimate</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ 🛠️ Build tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ 🛠️ Build tab</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -565,7 +567,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="command-card" style="min-height: 140px;">
             <strong>⚡ Skills, Commands & Subagents</strong><br/>
             <em>10 ready skills, 3 subagent templates, legacy command downloads</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ ⚡ Skills & Commands tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ ⚡ Skills & Commands tab</span>
         </div>
         """, unsafe_allow_html=True)
     with feat_row2[1]:
@@ -573,7 +575,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="info-card" style="min-height: 140px;">
             <strong>📁 Live Examples</strong><br/>
             <em>Real rules & commands from this project, annotated</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ 📁 Live Examples tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ 📁 Live Examples tab</span>
         </div>
         """, unsafe_allow_html=True)
     with feat_row2[2]:
@@ -581,7 +583,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         <div class="info-card" style="min-height: 140px;">
             <strong>🔗 Resources & More</strong><br/>
             <em>Official docs, community rules, AGENTS.md, hooks reference</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ 🔗 Resources tab</span>
+            <span style="font-size: 0.85rem; opacity: 0.75;">→ 🔗 Resources tab</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -647,7 +649,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
             "⏰ You need an **Automation**",
             "Automations run cloud agents on schedules or external triggers — a new PR, a Slack message, a cron "
             "expression. They're configured in Cursor itself rather than via project files.",
-            "Type `/automate` in Cursor chat, or manage them at [cursor.com/agents](https://cursor.com/agents).",
+            "Type `/automate` in Cursor chat, or manage them at [cursor.com/agents](https://cursor.com/docs/cloud-agent/automations).",
         )
 
     dh_title, dh_why, dh_next = dh_result
@@ -717,7 +719,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
                 <div class="{card_class}" style="min-height: 180px;">
                     <h4 style="margin-top: 0;">{rule_type['icon']} {rule_type['name']}</h4>
                     <p style="font-size: 0.85rem;"><code>{rule_type['location']}</code></p>
-                    <p style="font-size: 0.85rem; color: #6b7280;">{rule_type['description']}</p>
+                    <p style="font-size: 0.85rem; opacity: 0.75;">{rule_type['description']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -1819,6 +1821,17 @@ with tab_resources:
     
     st.markdown("---")
     
+    # What's New timeline
+    st.markdown("### 🆕 What's New in Cursor (2026)")
+    st.caption("The releases that reshaped rules, skills, and agents — this app's content tracks them.")
+
+    with st.expander("📅 **Release timeline** — Cursor 2.4 → 3.10", expanded=False):
+        for entry in get_whats_new():
+            st.markdown(f"**{entry['version']}** · *{entry['date']}* — {entry['highlights']}")
+        st.markdown("[📘 Full changelog →](https://cursor.com/changelog)")
+
+    st.markdown("---")
+
     # Advanced Topics section
     st.markdown("### 🔧 Advanced Topics")
     
@@ -1856,7 +1869,7 @@ with tab_resources:
                 <li>Code reviews repeat same feedback</li>
                 <li>New libraries used consistently</li>
             </ul>
-            <p style="font-size: 0.85rem; color: #6b7280;">
+            <p style="font-size: 0.85rem; opacity: 0.75;">
                 <em>💡 Great for growing projects!</em>
             </p>
         </div>
@@ -1874,7 +1887,7 @@ with tab_resources:
             st.markdown(f"**{group_name}:**")
             for hook in hooks:
                 st.markdown(f"- **`{hook['name']}`** — {hook['description']}")
-        st.markdown("[📘 View Official Hooks Documentation](https://cursor.com/docs/agent/hooks)")
+        st.markdown("[📘 View Official Hooks Documentation](https://cursor.com/docs/hooks)")
     
     # Rule Self-Improvement template download
     with st.expander("📄 **Download Rule Self-Improvement Template**", expanded=False):
@@ -1995,20 +2008,20 @@ See @.cursor/rules/cursor-rules.mdc for formatting guidelines."""
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; padding: 1.5rem 1rem;">
-    <p style="font-size: 0.95rem; margin-bottom: 1rem; color: #6b7280;">
+    <p style="font-size: 0.95rem; margin-bottom: 1rem; opacity: 0.75;">
         Built with ❤️ using Streamlit
     </p>
     <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-        <a href="https://docs.cursor.com/context/rules-for-ai" target="_blank" 
-           style="color: #2563eb; text-decoration: none; font-weight: 500;">📘 Rules Docs</a>
-        <a href="https://cursor.com/docs/context/commands" target="_blank" 
-           style="color: #16a34a; text-decoration: none; font-weight: 500;">📗 Commands Docs</a>
-        <a href="https://cursor.directory" target="_blank" 
-           style="color: #d97706; text-decoration: none; font-weight: 500;">🌐 cursor.directory</a>
-        <a href="https://github.com/PatrickJS/awesome-cursorrules" target="_blank" 
-           style="color: #7c3aed; text-decoration: none; font-weight: 500;">⭐ awesome-cursorrules</a>
+        <a href="https://cursor.com/docs/rules" target="_blank"
+           style="color: #3b82f6; text-decoration: none; font-weight: 500;">📘 Rules Docs</a>
+        <a href="https://cursor.com/docs/skills" target="_blank"
+           style="color: #22c55e; text-decoration: none; font-weight: 500;">📗 Skills Docs</a>
+        <a href="https://cursor.directory" target="_blank"
+           style="color: #f59e0b; text-decoration: none; font-weight: 500;">🌐 cursor.directory</a>
+        <a href="https://github.com/PatrickJS/awesome-cursorrules" target="_blank"
+           style="color: #8b5cf6; text-decoration: none; font-weight: 500;">⭐ awesome-cursorrules</a>
     </div>
-    <p style="font-size: 0.75rem; color: #9ca3af; max-width: 600px; margin: 0 auto;">
+    <p style="font-size: 0.75rem; opacity: 0.6; max-width: 600px; margin: 0 auto;">
         Official examples from Cursor docs · Community examples from cursor.directory
     </p>
 </div>

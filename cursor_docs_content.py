@@ -1459,7 +1459,7 @@ EXTERNAL_RESOURCES = {
     "official": [
         {
             "name": "Cursor Rules Documentation",
-            "url": "https://cursor.com/docs/context/rules",
+            "url": "https://cursor.com/docs/rules",
             "description": "Official Cursor documentation on Rules - the authoritative source for project rules (.mdc), team rules, AGENTS.md, and frontmatter syntax.",
             "type": "Official",
             "icon": "📘",
@@ -1473,22 +1473,22 @@ EXTERNAL_RESOURCES = {
         },
         {
             "name": "Cursor Hooks Documentation",
-            "url": "https://cursor.com/docs/agent/hooks",
+            "url": "https://cursor.com/docs/hooks",
             "description": "Official guide on lifecycle hooks - run scripts before/after AI operations for formatting, validation, logging.",
             "type": "Official",
             "icon": "🪝",
         },
         {
-            "name": "Cursor Quickstart Guide",
-            "url": "https://docs.cursor.com/get-started/quickstart",
-            "description": "Getting started with Cursor - covers basic setup and initial configuration.",
+            "name": "Cursor Subagents Documentation",
+            "url": "https://cursor.com/docs/subagents",
+            "description": "Official guide to subagents — delegated specialists with isolated context windows, built-in Explore/Bash/Browser agents, and cloud subagents.",
             "type": "Official",
-            "icon": "🚀",
+            "icon": "🤖",
         },
         {
-            "name": "Working with Context",
-            "url": "https://docs.cursor.com/guides/working-with-context",
-            "description": "Advanced guide on managing context in Cursor including @symbols, codebase indexing, and ignore files.",
+            "name": "Cursor Documentation Home",
+            "url": "https://cursor.com/docs",
+            "description": "The full Cursor documentation — quickstart, context management, agent features, and everything else.",
             "type": "Official",
             "icon": "📚",
         },
@@ -2193,9 +2193,9 @@ Place in your project root for project-wide AI guidance.
 
 ## Learn More
 
-- [Cursor Rules Documentation](https://cursor.com/docs/context/rules)
+- [Cursor Rules Documentation](https://cursor.com/docs/rules)
 - [Cursor Skills Documentation](https://cursor.com/docs/skills)
-- [Cursor Subagents Documentation](https://cursor.com/docs/agent/subagents)
+- [Cursor Subagents Documentation](https://cursor.com/docs/subagents)
 - [cursor.directory](https://cursor.directory) - Community rules
 
 > **Note:** Legacy `.cursor/commands/` files still work in Cursor, but this kit ships
@@ -2848,3 +2848,56 @@ def get_starter_kit_skills() -> Dict[str, str]:
 def get_starter_kit_subagents() -> Dict[str, str]:
     """Returns the starter kit subagent templates (filename -> content)."""
     return STARTER_KIT_SUBAGENTS
+
+
+# ============================================================================
+# WHAT'S NEW IN CURSOR (release timeline the app's content is based on)
+# ============================================================================
+
+WHATS_NEW = [
+    {
+        "version": "3.10",
+        "date": "June 2026",
+        "highlights": "Team MCP marketplaces — admins configure MCP servers once and distribute them across cloud agents, the IDE, and the CLI; organization groups for access control.",
+    },
+    {
+        "version": "3.9",
+        "date": "June 2026",
+        "highlights": "Cursor for iOS (public beta) with Remote Control of desktop agents; unified **Customize Cursor** page managing plugins, skills, MCPs, subagents, rules, commands, and hooks; marketplace leaderboard.",
+    },
+    {
+        "version": "3.8",
+        "date": "June 2026",
+        "highlights": "Automations improvements: `/automate` skill, Slack emoji triggers, five new GitHub triggers, computer-use tool for producing demos.",
+    },
+    {
+        "version": "3.7",
+        "date": "June 2026",
+        "highlights": "Cloud environment setup in under 10 minutes; cloud subagents via `/in-cloud`; `/babysit` for remote PR iteration; local-to-cloud session handoff.",
+    },
+    {
+        "version": "3.5",
+        "date": "May 2026",
+        "highlights": "**Cloud Agents**: isolated VMs with full terminal, browser, and desktop access; work across multiple repos in parallel and report back to your IDE.",
+    },
+    {
+        "version": "3.3",
+        "date": "May 2026",
+        "highlights": "Build-in-parallel subagents, pinned-skill pills, Composer 2.5 multi-file refactors at file-tree scale, native Jira integration.",
+    },
+    {
+        "version": "3.0–3.1",
+        "date": "April 2026",
+        "highlights": "New interface for running many agents in parallel — worktrees, cloud, remote SSH; `/worktree` and `/best-of-n`; tiled Agents Window panes.",
+    },
+    {
+        "version": "2.4",
+        "date": "January 2026",
+        "highlights": "**Skills** and **Subagents** introduced; `/migrate-to-skills` converts slash commands and dynamic rules; commands become legacy.",
+    },
+]
+
+
+def get_whats_new() -> List[Dict]:
+    """Returns the Cursor release timeline entries, newest first."""
+    return WHATS_NEW
