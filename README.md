@@ -1,17 +1,18 @@
 # 🚀 Cursor Kickstart
 
-A Streamlit app that helps developers **master Cursor Rules & Commands** — from zero to productive in minutes.
+A Streamlit app that helps developers **master Cursor Rules, Skills & Subagents** — from zero to productive in minutes.
 
 **🌐 Live App:** [cursor-kickstart.streamlit.app](https://cursor-kickstart.streamlit.app/)
 
 ## ✨ Features
 
-- **📦 Customizable Starter Kit** — Download a tailored set of rules and commands — pick only what you need
-- **🏗️ Interactive Rule Builder** — Build Cursor rules step by step with live preview and instant download
-- **✅ Rule Validator** — Paste any rule to check for common issues, get token estimates, and improvement tips
-- **📊 Learn the Difference** — Clear explanations of Cursor Commands vs Rules with side-by-side comparisons
-- **🤖 AI Generation Prompts** — Ready-to-use prompts to generate project-specific rules using Cursor's built-in AI
-- **⚡ Ready-to-Use Commands** — 10 generic slash commands that work with any project
+- **🤖 AI Generation Prompts** — The fastest way to add tailored rules to an existing project: one paste into Cursor chat generates rules from your own codebase (plus prompts for skills & subagents)
+- **📦 Customizable Starter Kit** — 5 rules, 10 skills, 3 subagents, a hooks example, and AGENTS.md — pick only what you need
+- **🤔 Decision Helper** — Answer two questions, learn whether you need a Rule, Skill, Subagent, Hook, or Automation
+- **🏗️ Rule Builder & ⚡ Skill Builder** — Build `.mdc` rules and `SKILL.md` skills step by step with live preview
+- **✅ Validator** — Paste any rule or skill to check for common issues, get token estimates, and improvement tips
+- **⚡ Skills & Commands** — Full Skills documentation (the successor to slash commands), 10 ready-to-use skills, legacy command downloads, and migration notes
+- **🤖 Subagents** — Docs plus verifier, code-reviewer, and test-writer templates
 - **📄 AGENTS.md Support** — Template for the simpler alternative that works with multiple AI tools
 - **🔗 Verified Resources** — Links to official Cursor documentation and curated community resources
 - **📁 Live Examples** — Real example files from this project's `.cursor/` directory
@@ -32,9 +33,9 @@ Rule files use the `.mdc` extension — required by Cursor (plain `.md` files in
 | `git-conventions.mdc` | Commit message and branch naming |
 | `rule-self-improvement.mdc` | Guidelines for evolving rules |
 
-### Commands (10 files)
-| Command | Purpose |
-|---------|---------|
+### Skills (10 folders — successor to slash commands)
+| Skill | Purpose |
+|-------|---------|
 | `/code-review-checklist` | Systematic code review |
 | `/write-tests` | Generate comprehensive tests |
 | `/debug` | Systematic debugging help |
@@ -46,8 +47,17 @@ Rule files use the `.mdc` extension — required by Cursor (plain `.md` files in
 | `/document` | Generate documentation |
 | `/optimize` | Performance optimization |
 
+### Subagents (3 files)
+| Subagent | Purpose |
+|----------|---------|
+| `/verifier` | Read-only agent that double-checks finished work |
+| `/code-reviewer` | Read-only reviewer for bugs, security & maintainability |
+| `/test-writer` | Writes tests matching your project's conventions |
+
 ### Bonus
 - **AGENTS.md** — Simple alternative for project-wide AI guidance
+- **hooks.json.example** — Safe starting point for lifecycle hooks
+- **Legacy commands** — The 10 classic `.cursor/commands/` files, available via the custom kit
 
 ## 🚀 Quick Start
 
@@ -126,9 +136,10 @@ The **Build** tab includes interactive tools:
 
 | Tool | Description |
 |------|-------------|
+| **AI Prompts** | Copy-paste prompts for generating project-specific rules, skills & subagents in Cursor |
 | **Rule Builder** | Step-by-step wizard with activation mode picker, 18 glob presets, live preview |
-| **Rule Validator** | Paste any rule to check frontmatter, detect conflicts, estimate tokens |
-| **AI Prompts** | Copy-paste prompts for generating project-specific rules in Cursor |
+| **Skill Builder** | Build a SKILL.md with invocation mode, path scoping, and inline validation |
+| **Validator** | Paste any rule or skill to check frontmatter, detect conflicts, estimate tokens |
 
 ## 🛠️ Tech Stack
 
@@ -137,13 +148,16 @@ The **Build** tab includes interactive tools:
 | **Streamlit** | Web UI framework (deployed on Streamlit Cloud) |
 | **PyYAML** | YAML frontmatter parsing |
 
-## 📖 What are Cursor Commands & Rules?
-
-### Commands
-Slash commands (like `/explain` or `/debug`) that you can invoke in Cursor's chat. They're stored in `.cursor/commands/` as markdown files.
+## 📖 What are Cursor Rules, Skills & Subagents?
 
 ### Rules
-Background context that Cursor's AI always considers when working with your code. They're stored in `.cursor/rules/` as `.mdc` files and can be configured to apply globally or to specific file patterns using YAML frontmatter.
+Background context that Cursor's AI always considers when working with your code — *how the AI should behave*. Stored in `.cursor/rules/` as `.mdc` files; apply globally or to specific file patterns via YAML frontmatter.
+
+### Skills
+On-demand abilities — *how to do something*. Each skill is a `SKILL.md` in `.cursor/skills/<name>/`, invoked automatically or with `/name`. Skills superseded slash commands in Cursor 2.4 (commands in `.cursor/commands/` still work but are legacy).
+
+### Subagents
+Specialists the agent can delegate to — *who does the work*. Markdown files in `.cursor/agents/` with their own context window, model choice, and optional read-only mode.
 
 ## 🔗 Resources
 

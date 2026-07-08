@@ -1,7 +1,7 @@
 """
 Cursor Kickstart
 
-A Streamlit app that helps developers master Cursor Rules & Commands —
+A Streamlit app that helps developers master Cursor Rules, Skills & Subagents —
 from zero to productive in minutes.
 
 Run with: streamlit run cursor_docs_app.py
@@ -33,6 +33,14 @@ from cursor_docs_content import (
     build_rule_content,
     validate_rule,
     STARTER_KIT_AGENTS_MD,
+    SKILL_FRONTMATTER_FIELDS,
+    get_skills_docs,
+    get_subagents_docs,
+    get_starter_kit_skills,
+    get_starter_kit_subagents,
+    build_skill_content,
+    validate_skill,
+    STARTER_KIT_HOOKS_EXAMPLE,
 )
 
 # ============================================================================
@@ -295,14 +303,14 @@ with st.sidebar:
         key="download_starter_kit_sidebar",
         use_container_width=True,
     )
-    st.caption("5 rules + 10 commands + AGENTS.md")
+    st.caption("5 rules · 10 skills · 3 subagents · AGENTS.md")
     
     st.markdown("---")
     
     st.markdown("### 📖 About This App")
     st.markdown("""
-    Learn the difference between **Cursor Rules** and **Cursor Commands**, 
-    explore real examples, and get prompts to generate your own using Cursor AI.
+    Learn **Cursor Rules, Skills, and Subagents**, explore real examples,
+    and get prompts to generate your own using Cursor AI.
     """)
     
     st.markdown("---")
@@ -347,12 +355,12 @@ st.markdown("""
         color: #6b7280; 
         max-width: 600px; 
         margin: 0 auto;
-    ">Master Cursor Rules & Commands — from zero to productive in minutes</p>
+    ">Master Cursor Rules, Skills & Subagents — from zero to productive in minutes</p>
 </div>
 """, unsafe_allow_html=True)
 
 # Tab names for navigation
-TAB_NAMES = ["📊 Overview", "📁 Live Examples", "🛠️ Build", "⚡ Commands", "🔗 Resources"]
+TAB_NAMES = ["📊 Overview", "📁 Live Examples", "🛠️ Build", "⚡ Skills & Commands", "🔗 Resources"]
 
 # Create tabs
 tab_overview, tab_examples, tab_build, tab_commands, tab_resources = st.tabs(TAB_NAMES)
@@ -392,7 +400,7 @@ with tab_overview:
             <h4 style="margin-top: 0;">📦 Starter Kit</h4>
             <p><em>Best for: new projects & instant generic setup</em></p>
             <ul style="margin-bottom: 0;">
-                <li><strong>5 essential rules</strong> + <strong>10 commands</strong> + AGENTS.md</li>
+                <li><strong>5 rules</strong> + <strong>10 skills</strong> + <strong>3 subagents</strong> + AGENTS.md</li>
                 <li>Generic best practices — works everywhere</li>
                 <li>Download, copy <code>.cursor/</code>, done</li>
             </ul>
@@ -424,16 +432,18 @@ with tab_overview:
         st.markdown("""
         1. Extract the ZIP and copy the `.cursor/` folder (and optionally `AGENTS.md`) to your project root
         2. Customize `project-structure.mdc` with your project details
-        3. Type `/` in Cursor chat — your commands are ready! 🎉
+        3. Type `/` in Cursor chat — your skills are ready! 🎉
         """)
 
     # Customizable kit
     with st.expander("🎨 **Customize Your Kit** — pick only what you need", expanded=False):
         kit_options = get_starter_kit_options()
 
-        col_rules_pick, col_cmds_pick = st.columns(2)
+        col_rules_pick, col_skills_pick = st.columns(2)
 
         selected_rules: list[str] = []
+        selected_skills: list[str] = []
+        selected_subagents: list[str] = []
         selected_commands: list[str] = []
 
         with col_rules_pick:
@@ -442,21 +452,49 @@ with tab_overview:
                 if st.checkbox(f"{name}", value=True, key=f"kit_r_{name}", help=desc):
                     selected_rules.append(name)
 
-        with col_cmds_pick:
-            st.markdown("**⚡ Commands**")
-            for name, desc in kit_options["commands"].items():
-                cmd_label = f"/{name.replace('.md', '')}"
-                if st.checkbox(cmd_label, value=True, key=f"kit_c_{name}", help=desc):
-                    selected_commands.append(name)
+            st.markdown("**🤖 Subagents**")
+            for name, desc in kit_options["subagents"].items():
+                if st.checkbox(f"{name}", value=True, key=f"kit_a_{name}", help=desc):
+                    selected_subagents.append(name)
+
+        with col_skills_pick:
+            st.markdown("**⚡ Skills**")
+            for name, desc in kit_options["skills"].items():
+                if st.checkbox(f"/{name}", value=True, key=f"kit_s_{name}", help=desc):
+                    selected_skills.append(name)
 
         include_agents = st.checkbox("📄 Include AGENTS.md", value=True, key="kit_agents")
+        include_hooks = st.checkbox("🪝 Include hooks.json.example (safe starting point for hooks)", value=True, key="kit_hooks")
 
-        item_count = len(selected_rules) + len(selected_commands) + (1 if include_agents else 0)
+        include_legacy = st.checkbox(
+            "🕰️ Include legacy commands (.cursor/commands/)",
+            value=False,
+            key="kit_legacy",
+            help="Only for older Cursor versions. Commands share /names with the skills above — avoid selecting both.",
+        )
+        if include_legacy:
+            cols_legacy = st.columns(2)
+            for i, (name, desc) in enumerate(kit_options["commands"].items()):
+                with cols_legacy[i % 2]:
+                    if st.checkbox(f"/{name.replace('.md', '')} (command)", value=True, key=f"kit_c_{name}", help=desc):
+                        selected_commands.append(name)
+
+        item_count = (
+            len(selected_rules) + len(selected_skills) + len(selected_subagents)
+            + len(selected_commands) + (1 if include_agents else 0) + (1 if include_hooks else 0)
+        )
 
         if item_count > 0:
-            custom_zip = generate_custom_starter_kit_zip(selected_rules, selected_commands, include_agents)
+            custom_zip = generate_custom_starter_kit_zip(
+                selected_rules,
+                selected_commands,
+                include_agents,
+                selected_skills=selected_skills,
+                selected_subagents=selected_subagents,
+                include_hooks_example=include_hooks,
+            )
             st.download_button(
-                label=f"⬇️ Download Custom Kit ({len(selected_rules)} rules, {len(selected_commands)} commands)",
+                label=f"⬇️ Download Custom Kit ({len(selected_rules)} rules, {len(selected_skills)} skills, {len(selected_subagents)} subagents)",
                 data=custom_zip,
                 file_name="cursor-starter-kit.zip",
                 mime="application/zip",
@@ -525,9 +563,9 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
     with feat_row2[0]:
         st.markdown("""
         <div class="command-card" style="min-height: 140px;">
-            <strong>⚡ 10 Ready Commands</strong><br/>
-            <em>Code review, tests, debug, refactor... + Skills migration notes</em><br/>
-            <span style="font-size: 0.85rem; color: #6b7280;">→ ⚡ Commands tab</span>
+            <strong>⚡ Skills, Commands & Subagents</strong><br/>
+            <em>10 ready skills, 3 subagent templates, legacy command downloads</em><br/>
+            <span style="font-size: 0.85rem; color: #6b7280;">→ ⚡ Skills & Commands tab</span>
         </div>
         """, unsafe_allow_html=True)
     with feat_row2[1]:
@@ -550,10 +588,78 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
     st.markdown("---")
 
     # =========================================================================
+    # DECISION HELPER — WHICH CUSTOMIZATION DO I NEED?
+    # =========================================================================
+
+    st.markdown("## 🤔 Which One Do I Need?")
+    st.markdown("Rules, skills, subagents, hooks, automations... answer two quick questions:")
+
+    dh_when = st.radio(
+        "**When should it kick in?**",
+        [
+            "Always, or when certain files are open",
+            "On demand — when I ask, or when the task matches",
+            "Automatically around agent actions (before/after tool calls, edits, prompts)",
+            "On a schedule or external trigger (PR opened, Slack message, cron)",
+        ],
+        key="dh_when",
+    )
+
+    if dh_when.startswith("Always"):
+        dh_result = (
+            "📋 You need a **Rule** — a `.mdc` file in `.cursor/rules/`",
+            "Rules are persistent context: how the AI should *behave*. Conventions, architecture, style. "
+            "Use `alwaysApply: true` for project-wide context, or `globs` to scope it to matching files.",
+            "**🛠️ Build → Rule Builder** to create one, or let AI generate it (**🛠️ Build → AI Prompts**).",
+        )
+    elif dh_when.startswith("On demand"):
+        dh_what = st.radio(
+            "**And what is it?**",
+            [
+                "Instructions or a workflow the agent should follow",
+                "A separate specialist with its own context window (reviewer, verifier, domain expert)",
+            ],
+            key="dh_what",
+        )
+        if dh_what.startswith("Instructions"):
+            dh_result = (
+                "⚡ You need a **Skill** — a `SKILL.md` in `.cursor/skills/<name>/`",
+                "Skills teach the agent how to *do* something: workflows, procedures, repeated tasks. "
+                "The agent invokes them automatically when the description matches, or you type `/name`.",
+                "**🛠️ Build → Skill Builder** to create one; docs and 10 ready skills in **⚡ Skills & Commands**.",
+            )
+        else:
+            dh_result = (
+                "🤖 You need a **Subagent** — a markdown file in `.cursor/agents/`",
+                "Subagents run in their own isolated context — perfect for reviewers, verifiers, and domain "
+                "experts whose verbose work shouldn't clutter your main conversation. Set `readonly: true` for checkers.",
+                "**⚡ Skills & Commands → Subagents** has docs and 3 ready templates.",
+            )
+    elif dh_when.startswith("Automatically"):
+        dh_result = (
+            "🪝 You need a **Hook** — configured in `hooks.json`",
+            "Hooks run your scripts at agent lifecycle stages: auto-format after edits, gate risky shell "
+            "commands, protect sensitive files, notify when done.",
+            "**🔗 Resources → Hooks Configuration** has the full 21-hook reference; the Starter Kit includes a safe `hooks.json.example`.",
+        )
+    else:
+        dh_result = (
+            "⏰ You need an **Automation**",
+            "Automations run cloud agents on schedules or external triggers — a new PR, a Slack message, a cron "
+            "expression. They're configured in Cursor itself rather than via project files.",
+            "Type `/automate` in Cursor chat, or manage them at [cursor.com/agents](https://cursor.com/agents).",
+        )
+
+    dh_title, dh_why, dh_next = dh_result
+    st.success(f"{dh_title}\n\n{dh_why}\n\n**Get started:** {dh_next}")
+
+    st.markdown("---")
+
+    # =========================================================================
     # THE 30-SECOND BASICS
     # =========================================================================
 
-    st.markdown("## 📊 Rules vs Commands — the 30-Second Version")
+    st.markdown("## 📊 Rules vs Skills — the 30-Second Version")
 
     col1, col2 = st.columns(2)
 
@@ -561,7 +667,7 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
         st.markdown("""
         <div class="rule-card">
             <h3>📋 Rules</h3>
-            <p><strong>Persistent context that guides the AI</strong></p>
+            <p><strong>Persistent context — how the AI should behave</strong></p>
             <ul>
                 <li>Located in <code>.cursor/rules/</code> as <code>.mdc</code> files</li>
                 <li>Triggered by file patterns or always active</li>
@@ -574,21 +680,21 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
     with col2:
         st.markdown("""
         <div class="command-card">
-            <h3>⚡ Commands</h3>
-            <p><strong>On-demand actions triggered by you</strong></p>
+            <h3>⚡ Skills</h3>
+            <p><strong>On-demand abilities — how to do something</strong></p>
             <ul>
-                <li>Located in <code>.cursor/commands/</code></li>
-                <li>Triggered by <code>/slash-command</code></li>
-                <li>Plain Markdown instructions</li>
-                <li>Legacy — superseded by <strong>Skills</strong>, but still supported</li>
+                <li>Located in <code>.cursor/skills/&lt;name&gt;/SKILL.md</code></li>
+                <li>Invoked automatically or via <code>/name</code></li>
+                <li>Can bundle scripts, references & assets</li>
+                <li>Successor to slash commands (which still work)</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
 
     st.info("""
     🆕 **2026 update:** Rules now **must use the `.mdc` extension** (plain `.md` files in `.cursor/rules/` are ignored),
-    and Cursor has introduced **Skills** (`SKILL.md`) as the successor to slash commands — existing commands still work.
-    See the **⚡ Commands** tab for migration notes.
+    and **Skills** replaced slash commands — existing commands still work.
+    See the **⚡ Skills & Commands** tab for docs and migration notes.
     """)
 
     st.markdown("---")
@@ -643,12 +749,21 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
     with st.expander("🗂️ **Directory Structure & Frontmatter Fields**", expanded=False):
         st.code("""
 .cursor/
-├── rules/                          # Automatic context injection (.mdc required)
-│   ├── cursor-rules.mdc            # Guidelines for writing rules
-│   └── project-structure.mdc       # Always-active project overview
+├── rules/                           # Automatic context injection (.mdc required)
+│   ├── cursor-rules.mdc             # Guidelines for writing rules
+│   └── project-structure.mdc        # Always-active project overview
 │
-└── commands/                       # Manual slash commands (legacy — see Skills)
-    └── code-review-checklist.md   # Invoked with /code-review-checklist
+├── skills/                          # On-demand abilities (successor to commands)
+│   └── deploy-checklist/
+│       └── SKILL.md                 # Invoked with /deploy-checklist or automatically
+│
+├── agents/                          # Subagents — delegated specialists
+│   └── verifier.md                  # Invoked with /verifier or auto-delegated
+│
+├── hooks.json                       # Lifecycle hooks (optional)
+│
+└── commands/                        # Legacy slash commands (still supported)
+    └── code-review-checklist.md    # Invoked with /code-review-checklist
         """, language="text")
 
         st.markdown("#### Rule Frontmatter Fields")
@@ -671,13 +786,13 @@ rm -rf cursor-starter-kit cursor-starter-kit.zip"""
             """)
 
         with col_use2:
-            st.markdown("#### ✅ Use **Commands** When...")
+            st.markdown("#### ✅ Use **Skills** When...")
             st.markdown("""
             - You need on-demand actions
             - Running code reviews
             - Generating boilerplate code
-            - Performing specific tasks
-            - Creating reusable workflows
+            - Teaching the agent a workflow
+            - Creating reusable procedures
             """)
 
         st.markdown("#### 📏 Rule File Size Guidelines")
@@ -778,7 +893,7 @@ Include: Overview, Directory Layout, Tech Stack, How to Run."""
         st.info("💡 **Why this works:** The `@.cursor/rules/cursor-rules.mdc` reference teaches the AI your rule format before it generates the new rule!")
 
         st.markdown("#### Step 4: Add ready-to-use commands")
-        st.success("👉 Grab `/code-review-checklist`, `/write-tests`, `/debug` and more from the **⚡ Commands** tab — or just use the Starter Kit above.")
+        st.success("👉 Grab `/code-review-checklist`, `/write-tests`, `/debug` and more from the **⚡ Skills & Commands** tab — or just use the Starter Kit above.")
 
 # ============================================================================
 # TAB 2: LIVE EXAMPLES
@@ -873,10 +988,11 @@ with tab_build:
     st.markdown("## 🛠️ Build Tools")
     st.markdown("Generate rules with AI, build them by hand, or validate what you already have:")
 
-    build_tab_ai, build_tab_builder, build_tab_validator = st.tabs([
+    build_tab_ai, build_tab_builder, build_tab_skill, build_tab_validator = st.tabs([
         "🤖 AI Prompts (recommended)",
         "🏗️ Rule Builder",
-        "✅ Rule Validator",
+        "⚡ Skill Builder",
+        "✅ Validator",
     ])
 
     # =================================================================
@@ -995,9 +1111,49 @@ Be concise. Quality over quantity."""
 
         st.markdown("---")
 
-        # Command generation prompts
-        st.markdown("#### ⚡ Generate Custom Commands")
-        st.markdown("Copy these prompts to generate commands tailored to your project:")
+        # Skill generation prompts
+        st.markdown("#### ⚡ Generate Skills")
+        st.markdown("Teach the agent your project's workflows — deploys, setups, repeated tasks:")
+
+        skill_prompts = get_prompt_templates("skills")
+        for prompt_data in skill_prompts:
+            with st.expander(f"**{prompt_data['name']}** - {prompt_data['description']}", expanded=False):
+                st.markdown(f"**Output file:** `{prompt_data['output_file']}`")
+                st.markdown("**Prompt to copy:**")
+                st.code(prompt_data['prompt'], language="text")
+                st.markdown("---")
+                st.markdown("**How to use:**")
+                st.markdown(f"""
+                1. Copy the prompt above
+                2. Open Cursor chat (Cmd/Ctrl + L)
+                3. Paste and press Enter — Cursor creates `{prompt_data['output_file']}` automatically
+                """)
+
+        st.markdown("---")
+
+        # Subagent generation prompts
+        st.markdown("#### 🤖 Generate Subagents")
+        st.markdown("Create specialists tailored to this project:")
+
+        subagent_prompts = get_prompt_templates("subagents")
+        for prompt_data in subagent_prompts:
+            with st.expander(f"**{prompt_data['name']}** - {prompt_data['description']}", expanded=False):
+                st.markdown(f"**Output file:** `{prompt_data['output_file']}`")
+                st.markdown("**Prompt to copy:**")
+                st.code(prompt_data['prompt'], language="text")
+                st.markdown("---")
+                st.markdown("**How to use:**")
+                st.markdown(f"""
+                1. Copy the prompt above
+                2. Open Cursor chat (Cmd/Ctrl + L)
+                3. Paste and press Enter — Cursor creates `{prompt_data['output_file']}` automatically
+                """)
+
+        st.markdown("---")
+
+        # Command generation prompts (legacy)
+        st.markdown("#### 🕰️ Generate Legacy Commands")
+        st.markdown("Still on classic commands? These prompts generate them — but consider skills instead:")
 
         command_prompts = get_prompt_templates("commands")
         for prompt_data in command_prompts:
@@ -1110,22 +1266,132 @@ Be concise. Quality over quantity."""
             st.info("👆 Enter a rule title to see the preview and download button.")
 
     # =================================================================
-    # SUB-TAB 3: RULE VALIDATOR
+    # SUB-TAB 3: SKILL BUILDER
+    # =================================================================
+
+    with build_tab_skill:
+        st.markdown("### ⚡ Skill Builder")
+        st.markdown("Build a Cursor skill (`SKILL.md`) step by step — preview and download instantly.")
+
+        col_sb1, col_sb2 = st.columns(2)
+
+        with col_sb1:
+            sb_name = st.text_input(
+                "Skill Name (lowercase-with-hyphens)",
+                placeholder="e.g., deploy-checklist",
+                key="sb_name",
+            )
+        with col_sb2:
+            sb_description = st.text_input(
+                "Description (what it does AND when to use it)",
+                placeholder="e.g., How to safely deploy this app. Use when asked to deploy.",
+                key="sb_desc",
+            )
+
+        sb_name_clean = sb_name.strip().lower().replace(" ", "-") if sb_name else ""
+        if sb_name and sb_name_clean != sb_name:
+            st.caption(f"Name normalized to: `{sb_name_clean}`")
+
+        sb_invocation = st.radio(
+            "Invocation",
+            ["Automatic — the agent invokes it when the description matches (+ /slash)", "Slash-only — /name, like a classic command"],
+            horizontal=True,
+            key="sb_invocation",
+            help="Slash-only sets disable-model-invocation: true",
+        )
+        sb_slash_only = sb_invocation.startswith("Slash-only")
+
+        sb_scope = st.checkbox("Restrict to certain files (`paths`)", key="sb_scope")
+        sb_paths: list[str] = []
+        if sb_scope:
+            col_sp1, col_sp2 = st.columns([1, 1])
+            with col_sp1:
+                sb_presets = st.multiselect(
+                    "Quick Select (presets)",
+                    options=list(COMMON_GLOB_PRESETS.keys()),
+                    key="sb_presets",
+                )
+                for preset in sb_presets:
+                    sb_paths.extend(COMMON_GLOB_PRESETS[preset])
+            with col_sp2:
+                sb_custom = st.text_input(
+                    "Custom patterns (comma-separated)",
+                    placeholder='src/api/**/*.ts, packages/ui/**',
+                    key="sb_custom_paths",
+                )
+                if sb_custom:
+                    sb_paths.extend([p.strip().strip('"').strip("'") for p in sb_custom.split(",") if p.strip()])
+            sb_paths = list(dict.fromkeys(sb_paths))
+            if sb_paths:
+                st.caption(f"📁 Paths: `{'`, `'.join(sb_paths)}`")
+
+        sb_body = st.text_area(
+            "Skill Instructions (Markdown)",
+            value="# My Skill\n\n## Steps\n\n1. \n2. \n3. \n\n## Verification\n\n- How to confirm each step worked",
+            height=250,
+            key="sb_body",
+        )
+
+        if sb_name_clean:
+            generated_skill = build_skill_content(
+                name=sb_name_clean,
+                description=sb_description,
+                paths=sb_paths,
+                disable_model_invocation=sb_slash_only,
+                body=sb_body,
+            )
+
+            with st.expander("📄 Preview SKILL.md", expanded=True):
+                st.code(generated_skill, language="markdown")
+
+            # Surface blocking issues inline (name format, missing description...)
+            sb_errors = [r for r in validate_skill(generated_skill, folder_name=sb_name_clean) if r["level"] == "error"]
+            for issue in sb_errors:
+                st.error(f"**{issue['message']}** — {issue['detail']}")
+
+            st.download_button(
+                label="⬇️ Download SKILL.md",
+                data=generated_skill,
+                file_name="SKILL.md",
+                mime="text/markdown",
+                key="sb_download",
+            )
+            st.success(f"📍 **Save to:** `.cursor/skills/{sb_name_clean}/SKILL.md` — the folder name must match the skill name.")
+        else:
+            st.info("👆 Enter a skill name to see the preview and download button.")
+
+    # =================================================================
+    # SUB-TAB 4: VALIDATOR (rules + skills)
     # =================================================================
 
     with build_tab_validator:
-        st.markdown("### ✅ Rule Validator")
-        st.markdown("Paste an existing rule to check for common issues and get improvement suggestions.")
+        st.markdown("### ✅ Validator")
+        st.markdown("Paste an existing rule or skill to check for common issues and get improvement suggestions.")
+
+        rv_kind = st.radio(
+            "What are you validating?",
+            ["Rule (.mdc)", "Skill (SKILL.md)"],
+            horizontal=True,
+            key="rv_kind",
+        )
+
+        if rv_kind == "Rule (.mdc)":
+            rv_placeholder = "---\ndescription: My coding standards\nglobs:\n  - \"**/*.py\"\nalwaysApply: false\n---\n\n# Coding Standards\n\n- Use type hints\n- ..."
+        else:
+            rv_placeholder = "---\nname: deploy-checklist\ndescription: How to safely deploy this app. Use when asked to deploy.\n---\n\n# Deploy Checklist\n\n1. Run tests\n2. ..."
 
         rv_input = st.text_area(
-            "Paste your rule content here",
+            "Paste your content here",
             height=200,
-            placeholder="---\ndescription: My coding standards\nglobs:\n  - \"**/*.py\"\nalwaysApply: false\n---\n\n# Coding Standards\n\n- Use type hints\n- ...",
+            placeholder=rv_placeholder,
             key="rv_input",
         )
 
         if rv_input.strip():
-            results = validate_rule(rv_input)
+            if rv_kind == "Rule (.mdc)":
+                results = validate_rule(rv_input)
+            else:
+                results = validate_skill(rv_input)
 
             # Summary counts
             passes = sum(1 for r in results if r["level"] == "pass")
@@ -1144,106 +1410,249 @@ Be concise. Quality over quantity."""
                 elif result["level"] == "info":
                     st.info(f"**{result['message']}** — {result['detail']}")
         else:
-            st.caption("Paste a rule above to validate it.")
+            st.caption("Paste a rule or skill above to validate it.")
 
 # ============================================================================
 # TAB 4: GENERIC COMMANDS
 # ============================================================================
 
 with tab_commands:
-    st.markdown("## ⚡ Ready-to-Use Commands")
-
-    st.warning("""
-    ⚠️ **Commands are now a legacy feature (2026).** Cursor has superseded slash commands with
-    **Skills** — `SKILL.md` files in `.cursor/skills/<skill-name>/` that can bundle scripts and assets,
-    and can be invoked automatically or with the same `/name` syntax.
-
-    Your existing `.cursor/commands/` files **still work**, so everything below remains usable.
-    To modernize, run Cursor's built-in **`/migrate-to-skills`** — it converts commands into skills with
-    `disable-model-invocation: true`, preserving the explicit `/name` behavior.
-    [📘 Skills documentation](https://cursor.com/docs/skills)
-    """)
-
+    st.markdown("## ⚡ Skills & Commands")
     st.markdown("""
-    These are **universal commands** that work for any project. Copy them directly
-    into your `.cursor/commands/` directory to use them immediately.
+    **Skills** are how you give Cursor on-demand abilities today — slash commands still work,
+    but they're legacy. Subagents complete the picture: specialists the agent can delegate to.
     """)
-    
-    st.markdown("---")
-    
-    generic_commands = get_generic_commands()
-    
-    # Command categories
-    categories = {
-        "Code Quality": ["code-review-checklist", "refactor", "explain"],
-        "Development": ["write-tests", "debug", "optimize"],
-        "Workflow": ["create-pr", "commit", "document", "sync-docs"],
-        "Security": ["security-audit"],
-    }
-    
-    for category, command_keys in categories.items():
-        st.markdown(f"### {category}")
-        
-        cols = st.columns(len(command_keys))
-        for idx, key in enumerate(command_keys):
-            if key in generic_commands:
-                cmd = generic_commands[key]
-                with cols[idx]:
-                    st.markdown(f"**/{key}**")
-                    st.caption(cmd['description'])
-        
-        for key in command_keys:
-            if key in generic_commands:
-                cmd = generic_commands[key]
-                with st.expander(f"📄 **{cmd['name']}** (`/{key}`)"):
-                    st.markdown(f"**Description:** {cmd['description']}")
-                    st.markdown(f"**Filename:** `.cursor/commands/{key}.md`")
-                    st.markdown("---")
-                    st.markdown("**Content:**")
-                    st.code(cmd['content'], language="markdown")
-                    
-                    # Download button
-                    st.download_button(
-                        label=f"⬇️ Download {key}.md",
-                        data=cmd['content'],
-                        file_name=f"{key}.md",
-                        mime="text/markdown",
-                        key=f"download_{key}",
-                    )
-        
-        st.markdown("---")
-    
-    # Bulk download section
-    st.markdown("### 📦 Download All Commands")
-    
-    col_bulk1, col_bulk2 = st.columns([2, 1])
-    
-    with col_bulk1:
-        st.markdown("Get all commands in one download with the **Starter Kit**:")
-        st.markdown("**Commands included:**")
-        cmd_list = ", ".join([f"`/{k}`" for k in generic_commands.keys()])
-        st.markdown(cmd_list)
-    
-    with col_bulk2:
-        # Generate and offer ZIP download
-        zip_data = generate_starter_kit_zip()
-        st.download_button(
-            label="⬇️ Download Complete Starter Kit",
-            data=zip_data,
-            file_name="cursor-starter-kit.zip",
-            mime="application/zip",
-            key="download_starter_kit_commands",
-            use_container_width=True,
+
+    sc_tab_skills, sc_tab_legacy, sc_tab_subagents = st.tabs([
+        "⚡ Skills (current)",
+        "🕰️ Legacy Commands",
+        "🤖 Subagents",
+    ])
+
+    # =================================================================
+    # SUB-TAB 1: SKILLS
+    # =================================================================
+
+    with sc_tab_skills:
+        skills_docs = get_skills_docs()
+
+        st.markdown("### What Are Skills?")
+        st.markdown(skills_docs["overview"])
+
+        col_sk1, col_sk2 = st.columns([3, 2])
+
+        with col_sk1:
+            st.markdown("**Anatomy of a skill** — a folder with a `SKILL.md`:")
+            st.code(skills_docs["example"], language="markdown")
+            st.caption("Saved as: `.cursor/skills/deploy-checklist/SKILL.md` — the folder name must match `name`.")
+
+        with col_sk2:
+            st.markdown("**A skill folder can also bundle:**")
+            for dirname, purpose in skills_docs["bundled_dirs"]:
+                st.markdown(f"- `{dirname}` — {purpose}")
+
+            st.markdown("**Where skills live:**")
+            for location, scope in skills_docs["locations"]:
+                st.markdown(f"- `{location}` — {scope}")
+
+        st.markdown("#### Frontmatter Fields")
+        for field, info in SKILL_FRONTMATTER_FIELDS.items():
+            with st.expander(f"`{field}` - {info['type']}" + (" *(required)*" if info['required'] else ""), expanded=False):
+                st.markdown(f"**Description:** {info['description']}")
+                st.markdown(f"**Required:** {'Yes' if info['required'] else 'No'}")
+                st.markdown("**Example:**")
+                st.code(info['example'], language="yaml")
+
+        st.markdown("#### Built-in Skills")
+        st.markdown(
+            "Cursor ships ~20 native skills that appear alongside yours: "
+            + " · ".join(f"`{s}`" for s in skills_docs["builtin_skills"])
         )
-        st.caption("Includes all commands + rules")
-    
-    st.markdown("""
-    **Setup instructions:**
-    1. Download the Starter Kit ZIP above
-    2. Extract and copy `.cursor/` folder to your project
-    3. Commands are immediately available when you type `/` in chat
-    """)
 
+        st.info(f"🔁 **Migrating from commands or dynamic rules?** {skills_docs['migration']}")
+
+        st.markdown("---")
+
+        # Ready-to-use skills (the classic commands, modernized)
+        st.markdown("### 📦 10 Ready-to-Use Skills")
+        st.markdown("""
+        The classic generic commands, converted to skills (with `disable-model-invocation: true`,
+        so they behave exactly like the `/commands` you know). All 10 are included in the **Starter Kit**.
+        """)
+
+        starter_skills = get_starter_kit_skills()
+        generic_commands = get_generic_commands()
+
+        skill_categories = {
+            "Code Quality": ["code-review-checklist", "refactor", "explain"],
+            "Development": ["write-tests", "debug", "optimize"],
+            "Workflow": ["create-pr", "commit", "document"],
+            "Security": ["security-audit"],
+        }
+
+        for category, skill_keys in skill_categories.items():
+            st.markdown(f"**{category}**")
+            for key in skill_keys:
+                if key in starter_skills:
+                    desc = generic_commands.get(key, {}).get("description", "")
+                    with st.expander(f"⚡ **/{key}** — {desc}"):
+                        st.markdown(f"**Save to:** `.cursor/skills/{key}/SKILL.md`")
+                        st.code(starter_skills[key], language="markdown")
+                        st.download_button(
+                            label="⬇️ Download SKILL.md",
+                            data=starter_skills[key],
+                            file_name="SKILL.md",
+                            mime="text/markdown",
+                            key=f"download_skill_{key}",
+                        )
+                        st.caption(f"Cursor also reads `.agents/skills/{key}/SKILL.md` and legacy `.claude/skills/` paths.")
+
+        st.markdown("")
+        col_skdl1, col_skdl2 = st.columns([2, 1])
+        with col_skdl1:
+            st.markdown("**Get all 10 skills (plus rules, subagents, and a hooks example) in one download:**")
+        with col_skdl2:
+            zip_data = generate_starter_kit_zip()
+            st.download_button(
+                label="⬇️ Download Starter Kit",
+                data=zip_data,
+                file_name="cursor-starter-kit.zip",
+                mime="application/zip",
+                key="download_starter_kit_skills",
+                use_container_width=True,
+            )
+
+    # =================================================================
+    # SUB-TAB 2: LEGACY COMMANDS
+    # =================================================================
+
+    with sc_tab_legacy:
+        st.warning("""
+        ⚠️ **Commands are now a legacy feature (2026).** Cursor has superseded slash commands with
+        **Skills** — see the Skills sub-tab. Your existing `.cursor/commands/` files **still work**,
+        so everything below remains usable. To modernize, run Cursor's built-in **`/migrate-to-skills`** —
+        it converts commands into skills with `disable-model-invocation: true`, preserving the explicit
+        `/name` behavior. [📘 Skills documentation](https://cursor.com/docs/skills)
+        """)
+
+        st.markdown("""
+        These are **universal commands** that work for any project. Copy them directly
+        into your `.cursor/commands/` directory to use them immediately.
+        """)
+
+        st.markdown("---")
+
+        generic_commands = get_generic_commands()
+
+        # Command categories
+        categories = {
+            "Code Quality": ["code-review-checklist", "refactor", "explain"],
+            "Development": ["write-tests", "debug", "optimize"],
+            "Workflow": ["create-pr", "commit", "document", "sync-docs"],
+            "Security": ["security-audit"],
+        }
+
+        for category, command_keys in categories.items():
+            st.markdown(f"### {category}")
+
+            cols = st.columns(len(command_keys))
+            for idx, key in enumerate(command_keys):
+                if key in generic_commands:
+                    cmd = generic_commands[key]
+                    with cols[idx]:
+                        st.markdown(f"**/{key}**")
+                        st.caption(cmd['description'])
+
+            for key in command_keys:
+                if key in generic_commands:
+                    cmd = generic_commands[key]
+                    with st.expander(f"📄 **{cmd['name']}** (`/{key}`)"):
+                        st.markdown(f"**Description:** {cmd['description']}")
+                        st.markdown(f"**Filename:** `.cursor/commands/{key}.md`")
+                        st.markdown("---")
+                        st.markdown("**Content:**")
+                        st.code(cmd['content'], language="markdown")
+
+                        # Download button
+                        st.download_button(
+                            label=f"⬇️ Download {key}.md",
+                            data=cmd['content'],
+                            file_name=f"{key}.md",
+                            mime="text/markdown",
+                            key=f"download_{key}",
+                        )
+
+            st.markdown("---")
+
+        st.info("""
+        📦 **Note:** The Starter Kit now ships these 10 actions as **Skills** instead of commands
+        (to avoid duplicate `/name` entries). If you need classic command files — for example on an
+        older Cursor version — use **🎨 Customize Your Kit** on the 📊 Overview tab and tick the
+        Legacy Commands you want.
+        """)
+
+    # =================================================================
+    # SUB-TAB 3: SUBAGENTS
+    # =================================================================
+
+    with sc_tab_subagents:
+        subagents_docs = get_subagents_docs()
+
+        st.markdown("### What Are Subagents?")
+        st.markdown(subagents_docs["overview"])
+
+        col_sa1, col_sa2 = st.columns([3, 2])
+
+        with col_sa1:
+            st.markdown("**Anatomy of a subagent** — a markdown file in `.cursor/agents/`:")
+            st.code(subagents_docs["example"], language="markdown")
+            st.markdown(f"**Invoking:** {subagents_docs['invocation']}")
+            st.markdown(f"**Cloud:** {subagents_docs['cloud']}")
+
+        with col_sa2:
+            st.markdown("**Frontmatter fields:**")
+            for field, purpose in subagents_docs["frontmatter"]:
+                st.markdown(f"- `{field}` — {purpose}")
+
+            st.markdown("**Where subagents live:**")
+            for location, scope in subagents_docs["locations"]:
+                st.markdown(f"- `{location}` — {scope}")
+
+        st.markdown("#### Built-in Subagents (no setup needed)")
+        cols_builtin = st.columns(3)
+        for idx, (name, desc) in enumerate(subagents_docs["builtins"]):
+            with cols_builtin[idx]:
+                st.markdown(f"""
+                <div class="info-card" style="min-height: 150px;">
+                    <strong>{name}</strong><br/>
+                    <em style="font-size: 0.85rem;">{desc}</em>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown("**Best practices:**")
+        for bp in subagents_docs["best_practices"]:
+            st.markdown(f"- {bp}")
+
+        st.markdown("---")
+
+        # Starter subagent templates
+        st.markdown("### 📦 3 Ready-to-Use Subagents")
+        st.markdown("Included in the **Starter Kit** — or download individually:")
+
+        starter_subagents = get_starter_kit_subagents()
+
+        for filename, content in starter_subagents.items():
+            agent_name = filename.replace(".md", "")
+            with st.expander(f"🤖 **/{agent_name}**"):
+                st.markdown(f"**Save to:** `.cursor/agents/{filename}`")
+                st.code(content, language="markdown")
+                st.download_button(
+                    label=f"⬇️ Download {filename}",
+                    data=content,
+                    file_name=filename,
+                    mime="text/markdown",
+                    key=f"download_subagent_{agent_name}",
+                )
 
 # ============================================================================
 # TAB 5: RESOURCES
